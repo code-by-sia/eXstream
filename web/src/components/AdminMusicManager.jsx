@@ -2,9 +2,10 @@ import React from "react";
 import { uploadMusicFile } from "../api/files.js";
 import { request } from "../api/client.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
-import { Card } from "./ui/card.jsx";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 import { Button } from "./ui/button.jsx";
 import { Input } from "./ui/input.jsx";
+import { Select } from "./ui/select.jsx";
 
 export function AdminMusicManager({ refresh }) {
   const token = usePlayerStore((s) => s.token);
@@ -34,16 +35,22 @@ export function AdminMusicManager({ refresh }) {
         <p className="text-sm text-muted">Upload tracks to the file service.</p>
       </div>
       <Card>
-        <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
-          <select name="playlistId" className="min-h-10 rounded-md border border-border px-3 text-sm" required>
-            {playlists.map((playlist) => <option key={playlist.id} value={playlist.id}>{playlist.name}</option>)}
-          </select>
-          <Input name="title" placeholder="Title" required />
-          <Input name="artist" placeholder="Artist" />
-          <Input name="file" type="file" accept="audio/*" required />
-          <Button type="submit">Add Track</Button>
-        </form>
-        {lastLink && <p className="mt-3 text-xs text-muted">Stored as {lastLink}</p>}
+        <CardHeader>
+          <CardTitle>Add a track</CardTitle>
+          <CardDescription>Audio is uploaded first, then stored as a playlist track.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
+            <Select name="playlistId" required>
+              {playlists.map((playlist) => <option key={playlist.id} value={playlist.id}>{playlist.name}</option>)}
+            </Select>
+            <Input name="title" placeholder="Title" required />
+            <Input name="artist" placeholder="Artist" />
+            <Input name="file" type="file" accept="audio/*" required />
+            <Button type="submit">Add Track</Button>
+          </form>
+          {lastLink && <p className="mt-3 text-xs text-muted">Stored as {lastLink}</p>}
+        </CardContent>
       </Card>
     </section>
   );

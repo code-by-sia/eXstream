@@ -78,6 +78,13 @@ npm run dev
 ```
 
 The Vite dev server runs on http://localhost:7001.
+When running the web app outside Docker, point the dev proxy at the gateway if needed:
+
+```sh
+VITE_API_TARGET=http://localhost:8080 npm run dev
+```
+
+In Docker Compose, the web service runs the Vite dev server with `./web` bind-mounted into the container, so React changes hot reload without rebuilding the image.
 
 Useful web routes:
 

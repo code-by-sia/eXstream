@@ -1,16 +1,14 @@
 import React from "react";
-import { Button } from "./ui/button.jsx";
+import { TabsList, TabsTrigger } from "./ui/tabs.jsx";
 
 const tabs = ["Music", "Podcasts", "Live"];
 
 export function MusicTabs() {
   return (
-    <div className="inline-flex rounded-md bg-accent p-1">
+    <TabsList>
       {tabs.map((tab, index) => (
-        <Button key={tab} type="button" variant={index === 0 ? "outline" : "ghost"} className="min-h-8 border-transparent px-3">
-          {tab}
-        </Button>
+        <TabsTrigger key={tab} active={index === 0}>{tab}</TabsTrigger>
       ))}
-    </div>
+    </TabsList>
   );
 }

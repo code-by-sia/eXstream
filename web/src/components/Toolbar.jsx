@@ -6,6 +6,7 @@ import { usePlayerStore } from "../store/usePlayerStore.js";
 import { Button } from "./ui/button.jsx";
 import { Input } from "./ui/input.jsx";
 import { MusicTabs } from "./MusicTabs.jsx";
+import { Separator } from "./ui/separator.jsx";
 
 export function Toolbar({ refresh }) {
   const token = usePlayerStore((s) => s.token);
@@ -40,6 +41,7 @@ export function Toolbar({ refresh }) {
         <h1 className="text-3xl font-bold">{selected?.name || "Listen Now"}</h1>
         <p className="text-sm text-muted">Top picks for you. Updated daily.</p>
       </div>
+      <Separator className="-mt-5" />
       <Input placeholder="Search music, artists, playlists" onInput={(event) => search(event).catch(() => {})} />
     </header>
   );

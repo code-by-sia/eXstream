@@ -51,11 +51,17 @@ services:
       - file-data:/app/data
 
   web:
-    build: ./web
+    build:
+      context: ./web
+      target: dev
     ports:
       - "7001:7001"
+    volumes:
+      - ./web:/app
+      - web-node-modules:/app/node_modules
 
 volumes:
   auth-data:
   playlist-data:
   file-data:
+  web-node-modules:

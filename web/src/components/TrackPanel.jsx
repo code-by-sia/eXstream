@@ -1,6 +1,7 @@
 import React from "react";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 import { AlbumCard } from "./AlbumCard.jsx";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 
 function allTracks(playlists) {
   return playlists.flatMap((playlist) => playlist.tracks.map((track) => ({ ...track, playlistName: playlist.name })));
@@ -8,15 +9,17 @@ function allTracks(playlists) {
 
 function TrackSection({ title, subtitle, tracks, onPlay, compact = false }) {
   return (
-    <section className="grid gap-4">
-      <div>
-        <h2 className="text-2xl font-bold">{title}</h2>
-        <p className="mt-1 text-sm text-muted">{subtitle}</p>
-      </div>
-      <div className={compact ? "grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4" : "grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-5"}>
-        {tracks.map((track) => <AlbumCard key={track.id} track={track} onPlay={() => onPlay(track)} />)}
-      </div>
-    </section>
+    <Card className="border-transparent shadow-none">
+      <CardHeader className="px-0">
+        <CardTitle className="text-2xl">{title}</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
+      </CardHeader>
+      <CardContent className="px-0">
+        <div className={compact ? "grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4" : "grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-5"}>
+          {tracks.map((track) => <AlbumCard key={track.id} track={track} onPlay={() => onPlay(track)} />)}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

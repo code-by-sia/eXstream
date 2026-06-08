@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { request } from "../api/client.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 import { Button } from "./ui/button.jsx";
-import { Card } from "./ui/card.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.jsx";
 import { Input } from "./ui/input.jsx";
 
 export function PlaylistCreator({ refresh }) {
@@ -27,12 +27,14 @@ export function PlaylistCreator({ refresh }) {
 
   return (
     <Card>
-      <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
-        <h2 className="text-base font-semibold">New Playlist</h2>
-        <Input name="name" placeholder="Name" required />
-        <Input name="description" placeholder="Description" />
-        <Button type="submit" disabled={!token}>Create</Button>
-      </form>
+      <CardHeader><CardTitle className="text-base">New Playlist</CardTitle></CardHeader>
+      <CardContent>
+        <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
+          <Input name="name" placeholder="Name" required />
+          <Input name="description" placeholder="Description" />
+          <Button type="submit" disabled={!token}>Create</Button>
+        </form>
+      </CardContent>
     </Card>
   );
 }

@@ -1,9 +1,18 @@
-FROM node:20-alpine AS build
+FROM node:20-alpine AS deps
 
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
 RUN npm install
+
+FROM deps AS dev
+
+COPY . .
+
+EXPOSE 7001
+CMD ["npm", "run", "dev"]
+
+FROM deps AS build
 
 COPY . .
 RUN npm run build
