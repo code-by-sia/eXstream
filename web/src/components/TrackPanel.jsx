@@ -1,48 +1,37 @@
 import React from "react";
-import { request } from "../api/client.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
-import { Button } from "./ui/button.jsx";
-import { Card } from "./ui/card.jsx";
-import { Input } from "./ui/input.jsx";
 import { AlbumCard } from "./AlbumCard.jsx";
 
-export function TrackPanel({ refresh }) {
-  const token = usePlayerStore((s) => s.token);
-  const selected = usePlayerStore((s) => s.selected);
-  const setSelected = usePlayerStore((s) => s.setSelected);
-  const setNowPlaying = usePlayerStore((s) => s.setNowPlaying);
+function allTracks(playlists) {
+  return playlists.flatMap((playlist) => playlist.tracks.map((track) => ({ ...track, playlistName: playlist.name })));
+}
 
-  async function submit(event) {
-    event.preventDefault();
-    if (!selected || selected.id === "search") return;
-    const form = new FormData(event.currentTarget);
-    const playlist = await request(`/playlists/${selected.id}/tracks`, {
-      token,
-      method: "POST",
-      body: JSON.stringify(Object.fromEntries(form)),
-    });
-    setSelected(playlist);
-    event.currentTarget.reset();
-    await refresh();
-  }
+function TrackSection({ title, subtitle, tracks, onPlay, compact = false }) {
+  return (
+    <section className="grid gap-4">
+      <div>
+        <h2 className="text-2xl font-bold">{title}</h2>
+        <p className="mt-1 text-sm text-muted">{subtitle}</p>
+      </div>
+      <div className={compact ? "grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4" : "grid grid-cols-[repeat(auto-fill,minmax(190px,1fr))] gap-5"}>
+        {tracks.map((track) => <AlbumCard key={track.id} track={track} onPlay={() => onPlay(track)} />)}
+      </div>
+    </section>
+  );
+}
+
+export function TrackPanel() {
+  const playlists = usePlayerStore((s) => s.playlists);
+  const selected = usePlayerStore((s) => s.selected);
+  const setNowPlaying = usePlayerStore((s) => s.setNowPlaying);
+  const tracks = selected?.tracks?.length ? selected.tracks : allTracks(playlists);
+  const madeForYou = allTracks(playlists).slice(0, 8);
 
   return (
-    <Card className="grid content-start gap-5">
-      <div className="grid gap-1">
-        <h2 className="text-lg font-semibold">{selected?.name || "Listen Now"}</h2>
-        <p className="text-sm text-muted">Top picks from your library.</p>
-      </div>
-      <form className="grid grid-cols-[1fr_1fr_1.5fr_auto] gap-2 max-xl:grid-cols-1" onSubmit={(event) => submit(event).catch(alert)}>
-        <Input name="title" placeholder="Title" required />
-        <Input name="artist" placeholder="Artist" />
-        <Input name="url" placeholder="Audio URL" required />
-        <Button type="submit" disabled={!selected || selected.id === "search"}>Add</Button>
-      </form>
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
-        {(selected?.tracks || []).map((track) => (
-          <AlbumCard key={track.id} track={track} onPlay={() => setNowPlaying(track)} />
-        ))}
-      </div>
-    </Card>
+    <section className="grid content-start gap-8 bg-card px-5 pb-8 lg:px-8">
+      {tracks.length === 0 && <p className="text-sm text-muted">No tracks yet. Admins can add music from the Add music page.</p>}
+      <TrackSection title="Listen Now" subtitle="Top picks for you. Updated daily." tracks={tracks.slice(0, 4)} onPlay={setNowPlaying} />
+      <TrackSection title="Made for You" subtitle="Your personal playlists. Updated daily." tracks={madeForYou} onPlay={setNowPlaying} compact />
+    </section>
   );
 }

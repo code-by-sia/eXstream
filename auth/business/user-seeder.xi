@@ -1,11 +1,11 @@
 consumer seedDefaultUsers(users: UserRepository) {
     let admin = users.find("admin")
     if not admin.found {
-        users.save("admin", "admin123", "ADMIN")
+        users.save("admin", "admin123", "ADMIN", "Admin", "admin@exstream.local", "🎛️")
     }
 
     let test = users.find("test")
     if not test.found {
-        users.save("test", "test123", "USER")
+        users.save("test", "test123", "USER", "Test Listener", "test@exstream.local", "🎧")
     }
 }

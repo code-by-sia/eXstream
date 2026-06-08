@@ -52,7 +52,7 @@ expect_status "test login" 200 \
 expect_status "registration ignores admin role" 200 \
   -X POST "http://127.0.0.1:$AUTH_PORT/auth/register" \
   -H 'Content-Type: application/json' \
-  -d "{\"username\":\"register-user-$RUN_ID\",\"password\":\"secret\",\"role\":\"ADMIN\"}"
+  -d "{\"username\":\"register-user-$RUN_ID\",\"password\":\"secret\",\"profileName\":\"Smoke User\",\"email\":\"smoke-$RUN_ID@exstream.local\",\"avatar\":\"🎧\",\"role\":\"ADMIN\"}"
 
 if ! grep -q '"role":"USER"' /tmp/exstream-test-response; then
   echo "registration should always create USER accounts" >&2

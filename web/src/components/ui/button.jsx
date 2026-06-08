@@ -7,7 +7,7 @@ const variants = cva(
   {
     variants: {
       variant: {
-        default: "border-primary bg-primary text-white hover:bg-teal-800",
+        default: "border-foreground bg-foreground text-background hover:opacity-90",
         outline: "border-border bg-card text-foreground hover:bg-accent",
         ghost: "border-transparent bg-transparent text-foreground hover:bg-accent",
       },

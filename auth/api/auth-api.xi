@@ -15,6 +15,10 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(400, "username and password are required")
             return
         }
+        if text.isEmpty(body.profileName) or text.isEmpty(body.email) {
+            res.sendStatus(400, "profile name and email are required")
+            return
+        }
 
         let existing = users.find(body.username)
         if existing.found {
@@ -23,11 +27,11 @@ class AuthApi implements WebRequestHandler {
         }
 
         let role = "USER"
-        if not users.save(body.username, body.password, role) {
+        if not users.save(body.username, body.password, role, body.profileName, body.email, body.avatar) {
             res.sendStatus(500, "failed to save user")
             return
         }
-        res.send(AuthResponse { token: issueToken(body.username, role), username: body.username, role: role })
+        res.send(authResponse(issueToken(body.username, role), body.username, role, body.profileName, body.email, body.avatar))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/login" and req.method == "POST" {
@@ -37,7 +41,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(401, "invalid username or password")
             return
         }
-        res.send(AuthResponse { token: issueToken(user.username, user.role), username: user.username, role: user.role })
+        res.send(authResponse(issueToken(user.username, user.role), user.username, user.role, user.profileName, user.email, user.avatar))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/reset-password" and req.method == "POST" {
@@ -51,7 +55,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(400, "password is required")
             return
         }
-        users.save(user.username, body.password, user.role)
+        users.save(user.username, body.password, user.role, user.profileName, user.email, user.avatar)
         res.send(Message { ok: true, message: "password reset" })
     }
 
@@ -61,7 +65,8 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(401, "invalid token")
             return
         }
-        res.send(ProfileResponse { username: ctx.username, role: ctx.role })
+        let user = users.find(ctx.username)
+        res.send(profileResponse(ctx.username, ctx.role, user))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/profile" and req.method == "GET" {
@@ -70,10 +75,22 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(403, "missing identity headers")
             return
         }
-        res.send(ProfileResponse { username: ctx.username, role: ctx.role })
+        let user = users.find(ctx.username)
+        res.send(profileResponse(ctx.username, ctx.role, user))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
+}
+
+mapper authResponse(token: String, username: String, role: String, profileName: String, email: String, avatar: String) -> AuthResponse {
+    return AuthResponse { token: token, username: username, role: role, profileName: profileName, email: email, avatar: avatar }
+}
+
+mapper profileResponse(username: String, role: String, user: UserRecord) -> ProfileResponse {
+    if user.found {
+        return ProfileResponse { username: user.username, role: role, profileName: user.profileName, email: user.email, avatar: user.avatar }
+    }
+    return ProfileResponse { username: username, role: role, profileName: username, email: "", avatar: "" }
 }

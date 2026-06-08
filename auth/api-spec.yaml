@@ -108,12 +108,20 @@ components:
   schemas:
     RegisterRequest:
       type: object
-      required: [username, password]
+      required: [username, password, profileName, email, avatar]
       properties:
         username:
           type: string
         password:
           type: string
+        profileName:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar:
+          type: string
+          description: Emoji avatar selected by the user.
     LoginRequest:
       type: object
       required: [username, password]
@@ -139,10 +147,22 @@ components:
           type: string
         role:
           type: string
+        profileName:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
     ProfileResponse:
       type: object
       properties:
         username:
           type: string
         role:
+          type: string
+        profileName:
+          type: string
+        email:
+          type: string
+        avatar:
           type: string
