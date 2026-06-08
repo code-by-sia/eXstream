@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 AUTH_PORT="${AUTH_PORT:-4401}"
 PLAYLIST_PORT="${PLAYLIST_PORT:-5501}"
 FILE_PORT="${FILE_PORT:-6601}"
+RUN_ID="${RUN_ID:-$$}"
 
 cd "$ROOT"
 
@@ -51,7 +52,7 @@ expect_status "test login" 200 \
 expect_status "registration ignores admin role" 200 \
   -X POST "http://127.0.0.1:$AUTH_PORT/auth/register" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"register-user","password":"secret","role":"ADMIN"}'
+  -d "{\"username\":\"register-user-$RUN_ID\",\"password\":\"secret\",\"role\":\"ADMIN\"}"
 
 if ! grep -q '"role":"USER"' /tmp/exstream-test-response; then
   echo "registration should always create USER accounts" >&2
@@ -61,6 +62,19 @@ fi
 
 expect_status "file rejects missing headers" 403 \
   "http://127.0.0.1:$FILE_PORT/files"
+
+expect_status "file upload returns unique link" 200 \
+  -X POST "http://127.0.0.1:$FILE_PORT/file" \
+  -H 'Content-Type: text/plain' \
+  -H 'X-Username: admin' \
+  -H 'X-Role: ADMIN' \
+  -d 'data:audio/plain;base64,ZmFrZQ=='
+
+if ! grep -q '"/file/music/' /tmp/exstream-test-response; then
+  echo "file upload should return a /file/music/<uuid> link" >&2
+  cat /tmp/exstream-test-response >&2
+  exit 1
+fi
 
 expect_status "playlist rejects missing headers" 403 \
   "http://127.0.0.1:$PLAYLIST_PORT/playlists"

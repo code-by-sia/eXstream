@@ -1,4 +1,6 @@
+import "std/crypto.xi"
 import "std/fs.xi"
+import "std/path.xi"
 import "std/text.xi"
 import "std/web.xi"
 import "file-types.xi"
@@ -18,6 +20,18 @@ class FileApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
         if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         res.send(FileList { files: files.list() })
+    }
+
+    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
+        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        let filePath = "music/" + newUuid()
+        let target = storagePath(filePath)
+        fs.mkdirAll(path.dirname(target))
+        if fs.writeFile(target, req.body) {
+            res.sendText(200, "{\"ok\":true,\"path\":\"" + filePath + "\",\"url\":\"/file/" + filePath + "\"}")
+            return
+        }
+        res.sendStatus(500, "failed to upload file")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "GET" {
@@ -63,6 +77,14 @@ class FileApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
+}
+
+mapper newUuid() -> String {
+    return crypto.randomHex(4) + "-"
+        + crypto.randomHex(2) + "-"
+        + crypto.randomHex(2) + "-"
+        + crypto.randomHex(2) + "-"
+        + crypto.randomHex(6)
 }
 
 consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {

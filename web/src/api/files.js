@@ -1,9 +1,5 @@
 import { request } from "./client.js";
 
-function safeFileName(name) {
-  return name.toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "track";
-}
-
 function readAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -15,20 +11,13 @@ function readAsDataUrl(file) {
 
 export async function uploadMusicFile(token, file) {
   const content = await readAsDataUrl(file);
-  const path = `music/${Date.now()}-${safeFileName(file.name)}`;
-  const body = JSON.stringify({ content });
+  const uploaded = await request("/file", { token, method: "POST", body: content, headers: { "Content-Type": "text/plain" } });
 
-  try {
-    await request(`/file/${path}`, { token, method: "POST", body });
-  } catch (error) {
-    if (!String(error.message).includes("already exists")) throw error;
-    await request(`/file/${path}`, { token, method: "PUT", body });
-  }
-  return path;
+  return uploaded.url;
 }
 
 export async function resolveTrackSource(token, source) {
   if (!source || source.startsWith("http") || source.startsWith("data:")) return source;
-  const file = await request(`/file/${source}`, { token });
+  const file = await request(source.startsWith("/file/") ? source : `/file/${source}`, { token });
   return file.content;
 }

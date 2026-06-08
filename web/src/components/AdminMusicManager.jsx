@@ -9,6 +9,7 @@ import { Input } from "./ui/input.jsx";
 export function AdminMusicManager({ refresh }) {
   const token = usePlayerStore((s) => s.token);
   const playlists = usePlayerStore((s) => s.playlists);
+  const [lastLink, setLastLink] = React.useState("");
 
   async function submit(event) {
     event.preventDefault();
@@ -21,6 +22,7 @@ export function AdminMusicManager({ refresh }) {
       method: "POST",
       body: JSON.stringify({ title: form.get("title"), artist: form.get("artist"), url }),
     });
+    setLastLink(url);
     event.currentTarget.reset();
     await refresh();
   }
@@ -41,6 +43,7 @@ export function AdminMusicManager({ refresh }) {
           <Input name="file" type="file" accept="audio/*" required />
           <Button type="submit">Add Track</Button>
         </form>
+        {lastLink && <p className="mt-3 text-xs text-muted">Stored as {lastLink}</p>}
       </Card>
     </section>
   );
