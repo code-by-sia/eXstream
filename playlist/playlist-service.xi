@@ -1,4 +1,5 @@
 import "api/playlist-api.xi"
+import "business/playlist-seeder.xi"
 import "std/convert.xi"
 import "std/web.xi"
 
@@ -15,6 +16,7 @@ module App {
             let parsed = convert.parseInteger(args.data[1])
             if isOk(parsed) { port = parsed.value }
         }
+        seedStarterPlaylists()
         web.serve(port)
     }
 }

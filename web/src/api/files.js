@@ -1,4 +1,5 @@
 import { request } from "./client.js";
+import { toneToDataUrl } from "./tone-audio.js";
 
 function readAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -18,6 +19,7 @@ export async function uploadMusicFile(token, file) {
 
 export async function resolveTrackSource(token, source) {
   if (!source || source.startsWith("http") || source.startsWith("data:")) return source;
+  if (source.startsWith("tone:")) return toneToDataUrl(source);
   const file = await request(source.startsWith("/file/") ? source : `/file/${source}`, { token });
   return file.content;
 }

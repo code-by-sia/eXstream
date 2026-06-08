@@ -86,4 +86,15 @@ expect_status "playlist accepts identity headers" 200 \
   -H 'X-Role: USER' \
   -d '{"name":"Smoke","description":"service test"}'
 
+expect_status "playlist exposes starter music" 200 \
+  "http://127.0.0.1:$PLAYLIST_PORT/playlists" \
+  -H 'X-Username: test' \
+  -H 'X-Role: USER'
+
+if ! grep -q 'Starter Favorites' /tmp/exstream-test-response; then
+  echo "starter playlist should be seeded for the test user" >&2
+  cat /tmp/exstream-test-response >&2
+  exit 1
+fi
+
 echo "service smoke tests passed"

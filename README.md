@@ -37,10 +37,19 @@ JWT_SECRET="change-me" docker compose up --build
 
 The auth service seeds two development users on startup:
 
-| Username | Password | Role |
-| --- | --- | --- |
-| `admin` | `admin123` | `ADMIN` |
-| `test` | `test123` | `USER` |
+| Username | Password | Role | Profile |
+| --- | --- | --- | --- |
+| `admin` | `admin123` | `ADMIN` | Admin |
+| `test` | `test123` | `USER` | Test Listener |
+
+The playlist service seeds initial royalty-free generated music for the `test` user:
+
+| Playlist | Tracks |
+| --- | --- |
+| Starter Favorites | Midnight Pulse, Glass Harbor, Solar Steps |
+| Ambient Loops | Slow Orbit, Clean Room, Open Sky |
+
+Seeded tracks use compact `tone:` URLs that the web player turns into generated WAV audio at playback time.
 
 ## Build Xi Services Locally
 
@@ -111,7 +120,7 @@ Register:
 ```sh
 curl -X POST http://localhost:8080/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"username":"sia","password":"secret","role":"USER"}'
+  -d '{"username":"sia","password":"secret","profileName":"Sia","email":"sia@example.com","avatar":"🎧"}'
 ```
 
 Create a playlist through the gateway:
