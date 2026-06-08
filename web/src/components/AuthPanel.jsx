@@ -33,12 +33,6 @@ export function AuthPanel({ refresh }) {
         </div>
         <Input name="username" placeholder="Username" autoComplete="username" required />
         <Input name="password" placeholder="Password" type="password" autoComplete="current-password" required />
-        {mode === "register" && (
-          <select name="role" className="min-h-10 rounded-md border border-border px-3 text-sm">
-            <option>USER</option>
-            <option>ADMIN</option>
-          </select>
-        )}
         <Button type="submit">Continue</Button>
       </form>
     </Card>

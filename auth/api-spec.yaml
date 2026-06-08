@@ -8,7 +8,7 @@ servers:
 paths:
   /auth/register:
     post:
-      summary: Register a user and return a JWT.
+      summary: Register a normal user and return a JWT.
       requestBody:
         required: true
         content:
@@ -114,9 +114,6 @@ components:
           type: string
         password:
           type: string
-        role:
-          type: string
-          enum: [ADMIN, USER]
     LoginRequest:
       type: object
       required: [username, password]

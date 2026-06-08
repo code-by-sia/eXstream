@@ -22,7 +22,7 @@ class AuthApi implements WebRequestHandler {
             return
         }
 
-        let role = cleanRole(body.role)
+        let role = "USER"
         if not users.save(body.username, body.password, role) {
             res.sendStatus(500, "failed to save user")
             return

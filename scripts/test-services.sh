@@ -48,6 +48,17 @@ expect_status "test login" 200 \
   -H 'Content-Type: application/json' \
   -d '{"username":"test","password":"test123"}'
 
+expect_status "registration ignores admin role" 200 \
+  -X POST "http://127.0.0.1:$AUTH_PORT/auth/register" \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"register-user","password":"secret","role":"ADMIN"}'
+
+if ! grep -q '"role":"USER"' /tmp/exstream-test-response; then
+  echo "registration should always create USER accounts" >&2
+  cat /tmp/exstream-test-response >&2
+  exit 1
+fi
+
 expect_status "file rejects missing headers" 403 \
   "http://127.0.0.1:$FILE_PORT/files"
 
