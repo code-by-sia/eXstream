@@ -19,7 +19,7 @@ export function Toolbar({ refresh }) {
   }
 
   return (
-    <header className="grid gap-4 border-b border-border bg-white p-5">
+    <header className="grid gap-4 border-b border-border bg-card p-5">
       <div className="flex items-center justify-between gap-3">
         <MusicTabs />
         <Button type="button" variant="outline" onClick={() => refresh().catch(alert)}>Refresh</Button>

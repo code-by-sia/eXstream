@@ -17,7 +17,7 @@ export function Sidebar({ refresh }) {
   }
 
   return (
-    <aside className="grid content-start gap-5 border-r border-border bg-slate-50 p-6 max-lg:border-r-0 max-lg:border-b">
+    <aside className="grid content-start gap-5 border-r border-border bg-card p-6 max-lg:border-r-0 max-lg:border-b">
       <div className="flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-md bg-foreground font-bold text-white">X</span>
         <div>

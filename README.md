@@ -78,6 +78,9 @@ Useful web routes:
 - `/search?q=term`: Deep link to music search results.
 - `/admin/music`: Admin-only music management.
 
+The web app supports dark mode, mobile-friendly layouts, and PWA installation via its web manifest and service worker.
+Admin music management uploads audio through the file service, then stores the uploaded file path on playlist tracks.
+
 ## Tests
 
 Run Xi unit tests:
