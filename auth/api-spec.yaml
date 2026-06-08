@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: eXstream Auth API
+  version: 0.1.0
+servers:
+  - url: http://localhost:4001
+  - url: http://localhost:8080
+paths:
+  /auth/register:
+    post:
+      summary: Register a user and return a JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          description: User already exists
+  /auth/login:
+    post:
+      summary: Authenticate a user and return a JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+  /auth/reset-password:
+    post:
+      summary: Reset a user's password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+      responses:
+        "200":
+          description: Password reset
+        "404":
+          description: User not found
+  /auth/verify:
+    get:
+      summary: Verify a bearer token.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Token identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          description: Invalid token
+  /auth/profile:
+    get:
+      summary: Return the current user profile from gateway identity headers.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/XUsername"
+        - $ref: "#/components/parameters/XRole"
+      responses:
+        "200":
+          description: Profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "403":
+          description: Missing identity headers
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    XUsername:
+      name: X-Username
+      in: header
+      schema:
+        type: string
+    XRole:
+      name: X-Role
+      in: header
+      schema:
+        type: string
+        enum: [ADMIN, USER]
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, USER]
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    ResetPasswordRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        username:
+          type: string
+        role:
+          type: string
+    ProfileResponse:
+      type: object
+      properties:
+        username:
+          type: string
+        role:
+          type: string

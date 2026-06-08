@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: eXstream Playlist API
+  version: 0.1.0
+servers:
+  - url: http://localhost:5001
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /playlists:
+    get:
+      summary: List playlists visible to the current identity.
+      responses:
+        "200":
+          description: Playlists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Playlist"
+        "403":
+          description: Missing identity headers
+    post:
+      summary: Create a playlist owned by the current identity.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaylistWrite"
+      responses:
+        "200":
+          description: Created playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+  /playlists/{id}:
+    get:
+      summary: Fetch a playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+      responses:
+        "200":
+          description: Playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "404":
+          description: Playlist not found
+    delete:
+      summary: Delete a playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: Playlist not found
+  /playlists/{id}/tracks:
+    post:
+      summary: Add a track to a playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackWrite"
+      responses:
+        "200":
+          description: Updated playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+  /playlist/search:
+    get:
+      summary: Search playlists.
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching playlists
+  /music/search:
+    get:
+      summary: Search tracks across visible playlists.
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching tracks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Track"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    PlaylistId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    PlaylistWrite:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+    TrackWrite:
+      type: object
+      required: [title, url]
+      properties:
+        title:
+          type: string
+        artist:
+          type: string
+        url:
+          type: string
+    Playlist:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        owner:
+          type: string
+        tracks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Track"
+    Track:
+      type: object
+      properties:
+        id:
+          type: string
+        playlistId:
+          type: string
+        title:
+          type: string
+        artist:
+          type: string
+        url:
+          type: string
+        addedBy:
+          type: string

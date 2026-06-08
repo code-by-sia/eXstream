@@ -1,0 +1,124 @@
+openapi: 3.0.3
+info:
+  title: eXstream File API
+  version: 0.1.0
+servers:
+  - url: http://localhost:6001
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+paths:
+  /files:
+    get:
+      summary: List stored files.
+      parameters:
+        - $ref: "#/components/parameters/XUsername"
+        - $ref: "#/components/parameters/XRole"
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileList"
+        "403":
+          description: Missing identity headers
+  /file/{path}:
+    get:
+      summary: Read a file by safe relative path.
+      parameters:
+        - $ref: "#/components/parameters/FilePath"
+        - $ref: "#/components/parameters/XUsername"
+        - $ref: "#/components/parameters/XRole"
+      responses:
+        "200":
+          description: Stored file
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileBody"
+        "404":
+          description: File not found
+    post:
+      summary: Create a file.
+      parameters:
+        - $ref: "#/components/parameters/FilePath"
+      requestBody:
+        $ref: "#/components/requestBodies/FileWrite"
+      responses:
+        "200":
+          description: Created
+        "409":
+          description: File already exists
+    put:
+      summary: Update a file.
+      parameters:
+        - $ref: "#/components/parameters/FilePath"
+      requestBody:
+        $ref: "#/components/requestBodies/FileWrite"
+      responses:
+        "200":
+          description: Updated
+        "404":
+          description: File not found
+    delete:
+      summary: Delete a file.
+      parameters:
+        - $ref: "#/components/parameters/FilePath"
+      responses:
+        "200":
+          description: Deleted
+        "404":
+          description: File not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    XUsername:
+      name: X-Username
+      in: header
+      schema:
+        type: string
+    XRole:
+      name: X-Role
+      in: header
+      schema:
+        type: string
+        enum: [ADMIN, USER]
+    FilePath:
+      name: path
+      in: path
+      required: true
+      schema:
+        type: string
+  requestBodies:
+    FileWrite:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/FileWrite"
+  schemas:
+    FileWrite:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+    FileBody:
+      type: object
+      properties:
+        path:
+          type: string
+        content:
+          type: string
+    FileList:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string

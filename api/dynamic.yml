@@ -1,0 +1,72 @@
+http:
+  middlewares:
+    bearer-auth:
+      forwardAuth:
+        address: http://forward-auth:3000/verify
+        trustForwardHeader: true
+        authResponseHeaders:
+          - X-Username
+          - X-Role
+
+  routers:
+    auth-public:
+      rule: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/reset-password`) || PathPrefix(`/auth/verify`)
+      service: auth
+      entryPoints:
+        - web
+      priority: 100
+
+    auth-protected:
+      rule: PathPrefix(`/auth`)
+      service: auth
+      middlewares:
+        - bearer-auth
+      entryPoints:
+        - web
+      priority: 90
+
+    file:
+      rule: PathPrefix(`/file`) || PathPrefix(`/files`)
+      service: file
+      middlewares:
+        - bearer-auth
+      entryPoints:
+        - web
+      priority: 80
+
+    playlist:
+      rule: PathPrefix(`/playlists`) || PathPrefix(`/playlist/search`) || PathPrefix(`/music/search`)
+      service: playlist
+      middlewares:
+        - bearer-auth
+      entryPoints:
+        - web
+      priority: 80
+
+    web:
+      rule: PathPrefix(`/`)
+      service: web
+      entryPoints:
+        - web
+      priority: 1
+
+  services:
+    auth:
+      loadBalancer:
+        servers:
+          - url: http://auth:4001
+
+    file:
+      loadBalancer:
+        servers:
+          - url: http://file:6001
+
+    playlist:
+      loadBalancer:
+        servers:
+          - url: http://playlist:5001
+
+    web:
+      loadBalancer:
+        servers:
+          - url: http://web:7001

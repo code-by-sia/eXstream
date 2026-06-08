@@ -1,0 +1,61 @@
+services:
+  traefik:
+    image: traefik:v3.3
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "8080:80"
+      - "8081:8080"
+    volumes:
+      - ./api/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./api/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    depends_on:
+      - auth
+      - file
+      - playlist
+      - web
+      - forward-auth
+
+  forward-auth:
+    build: ./api
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+
+  auth:
+    build:
+      context: .
+      dockerfile: auth/Dockerfile
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-secret}
+    ports:
+      - "4001:4001"
+    volumes:
+      - auth-data:/app/data
+
+  playlist:
+    build:
+      context: .
+      dockerfile: playlist/Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - playlist-data:/app/data
+
+  file:
+    build:
+      context: .
+      dockerfile: file/Dockerfile
+    ports:
+      - "6001:6001"
+    volumes:
+      - file-data:/app/data
+
+  web:
+    build: ./web
+    ports:
+      - "7001:7001"
+
+volumes:
+  auth-data:
+  playlist-data:
+  file-data:
