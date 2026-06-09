@@ -1,7 +1,6 @@
 import "std/fs.xi"
 import "std/path.xi"
 import "file-paths.xi"
-import "file-repository.xi"
 
 class DiskFileRepository implements FileRepository {
     deps {}
