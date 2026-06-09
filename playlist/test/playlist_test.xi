@@ -28,4 +28,18 @@ test "serializes playlists with tracks" {
     assert text.contains(rendered, "\"title\":\"Song\"")
 }
 
+test "updates and deletes playlist tracks" {
+    let id = createPlaylist("Manage", "Admin tools", "admin")
+    let trackId = addTrack(id, "Old title", "Old artist", "/file/old", "admin")
+
+    assert updateTrack(id, trackId, "New title", "New artist", "/file/new") == "updated"
+    let updated = playlistJson(id, readPlaylist(id))
+    assert text.contains(updated, "\"title\":\"New title\"")
+    assert text.contains(updated, "\"url\":\"/file/new\"")
+
+    assert deleteTrack(id, trackId) == "deleted"
+    assert not text.contains(readPlaylist(id), "New title")
+    deletePlaylist(id)
+}
+
 module App {}

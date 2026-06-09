@@ -78,6 +78,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Playlist"
+  /playlists/{id}/tracks/{trackId}:
+    put:
+      summary: Update a track in a playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+        - $ref: "#/components/parameters/TrackId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackWrite"
+      responses:
+        "200":
+          description: Updated playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "404":
+          description: Track not found
+    delete:
+      summary: Delete a track from a playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+        - $ref: "#/components/parameters/TrackId"
+      responses:
+        "200":
+          description: Updated playlist
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "404":
+          description: Track not found
   /playlist/search:
     get:
       summary: Search playlists.
@@ -115,6 +150,12 @@ components:
   parameters:
     PlaylistId:
       name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    TrackId:
+      name: trackId
       in: path
       required: true
       schema:

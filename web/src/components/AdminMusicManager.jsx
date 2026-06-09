@@ -3,6 +3,7 @@ import { useAdminMusicSubmit } from "../hooks/useAdminMusicSubmit.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card.jsx";
 import { AdminMusicForm } from "./AdminMusicForm.jsx";
+import { AdminMusicLibrary } from "./AdminMusicLibrary.jsx";
 import { AdminSongConfirm } from "./AdminSongConfirm.jsx";
 import { AdminUploadStatus } from "./AdminUploadStatus.jsx";
 
@@ -37,6 +38,7 @@ export function AdminMusicManager({ refresh }) {
           />
         </CardContent>
       </Card>
+      <AdminMusicLibrary playlists={playlists} refresh={refresh} />
     </section>
   );
 }
