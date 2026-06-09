@@ -25,6 +25,8 @@ services:
     build:
       context: .
       dockerfile: auth/Dockerfile
+      ssh:
+        - default
     environment:
       JWT_SECRET: ${JWT_SECRET:-dev-secret}
     ports:
@@ -36,6 +38,8 @@ services:
     build:
       context: .
       dockerfile: playlist/Dockerfile
+      ssh:
+        - default
     ports:
       - "5001:5001"
     volumes:
@@ -45,6 +49,8 @@ services:
     build:
       context: .
       dockerfile: file/Dockerfile
+      ssh:
+        - default
     ports:
       - "6001:6001"
     volumes:

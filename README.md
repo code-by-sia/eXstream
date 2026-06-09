@@ -22,6 +22,13 @@ eXstream is a Xi-based music streaming web app with separate services for ingres
 docker compose up --build
 ```
 
+The Xi service images install Xi with Homebrew. If the `code-by-sia/x` Homebrew tap is private, make sure GitHub SSH auth is available to Docker/Colima before building:
+
+```sh
+ssh -T git@github.com
+docker compose build
+```
+
 - Web UI: http://localhost:7001
 - API gateway: http://localhost:8080
 - Traefik dashboard: http://localhost:8081
