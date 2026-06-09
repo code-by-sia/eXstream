@@ -9,6 +9,10 @@ export async function request(path, { token, ...options } = {}) {
   });
 
   const text = await response.text();
-  if (!response.ok) throw new Error(text || response.statusText);
+  if (!response.ok) {
+    const error = new Error(text || response.statusText);
+    error.status = response.status;
+    throw error;
+  }
   return text ? JSON.parse(text) : undefined;
 }

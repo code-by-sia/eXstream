@@ -17,7 +17,10 @@ test("sends bearer tokens and parses json responses", async () => {
 test("throws response text for failed requests", async () => {
   globalThis.fetch = async () => new Response("missing identity headers", { status: 403 });
 
-  await assert.rejects(() => request("/playlists"), /missing identity headers/);
+  await assert.rejects(
+    () => request("/playlists"),
+    (error) => error.message === "missing identity headers" && error.status === 403,
+  );
 });
 
 test("omits authorization when token is empty", async () => {

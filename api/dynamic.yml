@@ -25,6 +25,15 @@ http:
         - web
       priority: 90
 
+    file-upload:
+      rule: Path(`/file`) && Method(`POST`)
+      service: file
+      middlewares:
+        - bearer-auth
+      entryPoints:
+        - web
+      priority: 120
+
     file:
       rule: PathPrefix(`/file`) || PathPrefix(`/files`)
       service: file
