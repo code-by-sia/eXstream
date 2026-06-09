@@ -3,12 +3,12 @@ import { cva } from "class-variance-authority";
 import { cn } from "../../lib/utils.js";
 
 const variants = cva(
-  "inline-flex min-h-10 items-center justify-center rounded-md border px-4 text-sm font-medium transition",
+  "inline-flex min-h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition",
   {
     variants: {
       variant: {
-        default: "border-foreground bg-foreground text-background hover:opacity-90",
-        outline: "border-border bg-card text-foreground hover:bg-accent",
+        default: "border-primary bg-primary text-white shadow-sm hover:brightness-95",
+        outline: "border-border bg-card text-foreground shadow-sm hover:bg-accent",
         ghost: "border-transparent bg-transparent text-foreground hover:bg-accent",
       },
     },

@@ -5,26 +5,26 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: 210 22% 95%;
+    --background: 220 20% 96%;
     --card: 0 0% 100%;
-    --foreground: 210 22% 10%;
-    --muted: 213 9% 43%;
-    --border: 210 15% 86%;
-    --primary: 176 81% 26%;
-    --accent: 210 20% 92%;
-    --focus: 32 95% 43%;
+    --foreground: 220 18% 8%;
+    --muted: 220 8% 43%;
+    --border: 220 14% 86%;
+    --primary: 348 85% 55%;
+    --accent: 220 18% 92%;
+    --focus: 142 70% 40%;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 220 18% 9%;
-    --card: 220 17% 13%;
-    --foreground: 210 30% 96%;
-    --muted: 215 13% 66%;
-    --border: 216 14% 24%;
-    --primary: 172 66% 45%;
-    --accent: 220 14% 20%;
-    --focus: 38 92% 55%;
+    --background: 240 10% 7%;
+    --card: 240 8% 11%;
+    --foreground: 220 22% 96%;
+    --muted: 225 10% 65%;
+    --border: 240 8% 22%;
+    --primary: 348 85% 58%;
+    --accent: 240 7% 17%;
+    --focus: 142 70% 45%;
   }
 
   body {

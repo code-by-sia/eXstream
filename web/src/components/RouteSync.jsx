@@ -25,5 +25,10 @@ export function RouteSync() {
       .catch(() => setSelected({ id: "search", name: "Search", tracks: [] }));
   }, [location.pathname, location.search, token, setSelected]);
 
+  useEffect(() => {
+    if (playlistId || location.pathname === "/search") return;
+    setSelected(undefined);
+  }, [playlistId, location.pathname, setSelected]);
+
   return undefined;
 }

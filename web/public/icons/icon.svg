@@ -1,4 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#0f766e"/>
-  <path d="M144 140h84l46 72 48-72h84L316 256l94 116h-86l-50-74-52 74h-84l96-118-90-114Z" fill="#fff"/>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1b063f"/>
+      <stop offset="55%" stop-color="#061135"/>
+      <stop offset="100%" stop-color="#020614"/>
+    </linearGradient>
+
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#20d8ff"/>
+      <stop offset="50%" stop-color="#2488ff"/>
+      <stop offset="100%" stop-color="#7c2cff"/>
+    </linearGradient>
+
+    <linearGradient id="pinkGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff31d9"/>
+      <stop offset="50%" stop-color="#8b35ff"/>
+      <stop offset="100%" stop-color="#22d7ff"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- macOS icon background -->
+  <rect x="96" y="96" width="832" height="832" rx="170" fill="url(#bg)" filter="url(#shadow)"/>
+
+  <!-- play button -->
+  <path d="M305 390C305 360 337 342 362 359L493 448C518 465 518 501 493 518L362 607C337 624 305 606 305 576Z"
+        fill="url(#pinkGrad)"/>
+
+  <!-- X shape -->
+  <path d="M380 260H500C530 260 556 276 574 300L792 585C815 615 793 660 755 660H635C604 660 577 644 559 619L342 334C319 304 341 260 380 260Z"
+        fill="url(#blueGrad)"/>
+
+  <path d="M642 260H762C801 260 823 305 800 335L582 620C564 644 537 660 507 660H387C348 660 326 615 349 585L567 300C585 276 612 260 642 260Z"
+        fill="url(#pinkGrad)" opacity="0.95"/>
 </svg>

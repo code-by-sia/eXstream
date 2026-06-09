@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect, useRef } from "react";
 import { resolveTrackSource } from "../api/files.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
+import { CoverImage } from "./CoverImage.jsx";
 
 export function PlayerBar() {
   const audio = useRef(undefined);
@@ -21,10 +22,13 @@ export function PlayerBar() {
   }, [source]);
 
   return (
-    <footer className="grid grid-cols-[1fr_minmax(260px,520px)] items-center gap-5 border-t border-border bg-card p-5 max-lg:grid-cols-1">
-      <div className="grid gap-1">
-        <strong>{track?.title || "Nothing playing"}</strong>
-        <span className="text-sm text-muted">{track?.artist || ""}</span>
+    <footer className="grid gap-4 border-t border-border bg-background/90 p-4 backdrop-blur md:grid-cols-[minmax(220px,1fr)_minmax(260px,560px)] md:items-center">
+      <div className="grid grid-cols-[3.5rem_1fr] items-center gap-3">
+        <CoverImage track={track} className="size-14 shadow-md" />
+        <div className="min-w-0">
+          <strong className="block truncate">{track?.title || "Nothing playing"}</strong>
+          <span className="block truncate text-sm text-muted">{track?.artist || "Select a track"}</span>
+        </div>
       </div>
       <audio ref={audio} controls className="w-full">
         {source && <source src={source} />}

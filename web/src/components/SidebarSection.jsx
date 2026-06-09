@@ -2,16 +2,17 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton } from "./ui/sidebar.jsx";
 
-export function SidebarSection({ title, items }) {
+export function SidebarSection({ className, title, items }) {
   const location = useLocation();
+  const activeFor = (to) => (to === "/" ? location.pathname === to : location.pathname === to);
 
   return (
-    <SidebarGroup>
+    <SidebarGroup className={className}>
       <SidebarGroupLabel>{title}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map(({ label, to, icon: Icon }) => (
           <Link key={label} to={to}>
-            <SidebarMenuButton active={location.pathname === to}>
+            <SidebarMenuButton active={activeFor(to)}>
               {Icon && <Icon className="h-4 w-4" />}
               <span className="truncate">{label}</span>
             </SidebarMenuButton>
