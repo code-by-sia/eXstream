@@ -24,22 +24,22 @@ producer deletePlaylist(id: String) -> Bool {
     return fs.remove(playlistPath(id))
 }
 
-producer addTrack(id: String, title: String, artist: String, url: String, username: String) -> String {
+producer addTrack(id: String, title: String, artist: String, url: String, username: String, coverUrl: String) -> String {
     let content = readPlaylist(id)
     if text.isEmpty(content) { return "" }
 
     let trackId = crypto.randomHex(8)
-    let line = trackId + "|" + cleanField(title) + "|" + cleanField(artist) + "|" + cleanField(url) + "|" + username
+    let line = trackLine(trackId, title, artist, url, username, coverUrl)
     if fs.writeFile(playlistPath(id), content + "\n" + line) { return trackId }
     return ""
 }
 
-producer updateTrack(id: String, trackId: String, title: String, artist: String, url: String) -> String {
+producer updateTrack(id: String, trackId: String, title: String, artist: String, url: String, coverUrl: String) -> String {
     if not safeId(trackId) { return "invalid-id" }
     let content = readPlaylist(id)
     if text.isEmpty(content) { return "playlist-not-found" }
 
-    let result = rewriteTrack(content, trackId, title, artist, url, false)
+    let result = rewriteTrack(content, trackId, title, artist, url, coverUrl, false)
     if result == "not-found" { return result }
     if fs.writeFile(playlistPath(id), result) { return "updated" }
     return "storage-failed"
@@ -50,7 +50,7 @@ producer deleteTrack(id: String, trackId: String) -> String {
     let content = readPlaylist(id)
     if text.isEmpty(content) { return "playlist-not-found" }
 
-    let result = rewriteTrack(content, trackId, "", "", "", true)
+    let result = rewriteTrack(content, trackId, "", "", "", "", true)
     if result == "not-found" { return result }
     if fs.writeFile(playlistPath(id), result) { return "deleted" }
     return "storage-failed"
@@ -78,11 +78,11 @@ producer listPlaylistsJson(username: String, role: String) -> String {
     return out + "]"
 }
 
-mapper trackLine(trackId: String, title: String, artist: String, url: String, addedBy: String) -> String {
-    return trackId + "|" + cleanField(title) + "|" + cleanField(artist) + "|" + cleanField(url) + "|" + addedBy
+mapper trackLine(trackId: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String) -> String {
+    return trackId + "|" + cleanField(title) + "|" + cleanField(artist) + "|" + cleanField(url) + "|" + addedBy + "|" + cleanField(coverUrl)
 }
 
-mapper rewriteTrack(content: String, trackId: String, title: String, artist: String, url: String, remove: Bool) -> String {
+mapper rewriteTrack(content: String, trackId: String, title: String, artist: String, url: String, coverUrl: String, remove: Bool) -> String {
     let lines = text.split(content, "\n")
     let out = lineOr(lines, 0) + "\n" + lineOr(lines, 1) + "\n" + lineOr(lines, 2)
     let found = false
@@ -94,7 +94,7 @@ mapper rewriteTrack(content: String, trackId: String, title: String, artist: Str
         if parts.len >= 5 and parts.data[0] == trackId {
             found = true
             if not remove {
-                out = out + "\n" + trackLine(trackId, title, artist, url, parts.data[4])
+                out = out + "\n" + trackLine(trackId, title, artist, url, parts.data[4], coverUrl)
             }
         } else if not text.isEmpty(line) {
             out = out + "\n" + line

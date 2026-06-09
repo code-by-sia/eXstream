@@ -18,8 +18,20 @@ test("parses id3 title and artist text frames", () => {
   });
 });
 
+test("parses id3 album art frames", () => {
+  const png = bytes([137, 80, 78, 71]);
+  const body = bytes([3, ...ascii("image/png"), 0, 3, 0, ...png]);
+  const parsed = parseId3Metadata(tag([binaryFrame("APIC", body)]));
+
+  assert.equal(parsed.coverUrl, "data:image/png;base64,iVBORw==");
+});
+
 function frame(id, text) {
   const body = bytes([3, ...new TextEncoder().encode(text)]);
+  return binaryFrame(id, body);
+}
+
+function binaryFrame(id, body) {
   return bytes([...ascii(id), ...uint32(body.length), 0, 0, ...body]);
 }
 

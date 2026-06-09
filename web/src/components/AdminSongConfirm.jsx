@@ -17,6 +17,15 @@ export function AdminSongConfirm({ disabled, pending, onCancel, onConfirm }) {
         <p className="font-medium">Create this song in the library?</p>
         <p className="text-xs text-muted">The file upload is complete. Review the detected metadata.</p>
       </div>
+      {pending.coverUrl ? (
+        <div className="flex items-center gap-3 rounded-md border border-border p-2">
+          <img src={pending.coverUrl} alt="" className="size-16 rounded-md object-cover" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium">Album art detected</p>
+            <p className="truncate text-xs text-muted">It will be saved with this song.</p>
+          </div>
+        </div>
+      ) : null}
       <div className="grid gap-2">
         <Input name="title" defaultValue={pending.title} placeholder="Title" required disabled={disabled} />
         <Input name="artist" defaultValue={pending.artist} placeholder="Artist" disabled={disabled} />

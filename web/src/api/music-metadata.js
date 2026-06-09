@@ -35,8 +35,10 @@ export function parseId3Metadata(bytes) {
     if (!/^[A-Z0-9]{4}$/.test(id)) break;
 
     const size = major === 4 ? syncSafe(bytes, offset + 4) : uint32(bytes, offset + 4);
-    const value = decodeTextFrame(bytes.subarray(offset + 10, offset + 10 + size));
-    if (textFrames[id] && value) tags[textFrames[id]] = value;
+    const frame = bytes.subarray(offset + 10, offset + 10 + size);
+    const value = textFrames[id] ? decodeTextFrame(frame) : "";
+    if (value) tags[textFrames[id]] = value;
+    if (id === "APIC") tags.coverUrl = decodePictureFrame(frame);
     offset += 10 + size;
   }
 
@@ -55,6 +57,33 @@ function decodeTextFrame(bytes) {
   return new TextDecoder(label).decode(body).replace(/\0/g, "").trim();
 }
 
+function decodePictureFrame(bytes) {
+  if (bytes.length < 5) return "";
+  const encoding = bytes[0];
+  const mimeEnd = bytes.indexOf(0, 1);
+  if (mimeEnd < 0) return "";
+
+  const mime = ascii(bytes, 1, mimeEnd - 1) || "image/jpeg";
+  const descriptionStart = mimeEnd + 2;
+  const descriptionEnd = findDescriptionEnd(bytes, descriptionStart, encoding);
+  if (descriptionEnd < 0 || !mime.startsWith("image/")) return "";
+
+  const skip = encoding === 1 || encoding === 2 ? 2 : 1;
+  const image = bytes.subarray(descriptionEnd + skip);
+  if (!image.length) return "";
+  return `data:${mime};base64,${base64(image)}`;
+}
+
+function findDescriptionEnd(bytes, start, encoding) {
+  if (encoding !== 1 && encoding !== 2) return bytes.indexOf(0, start);
+  let i = start;
+  while (i + 1 < bytes.length) {
+    if (bytes[i] === 0 && bytes[i + 1] === 0) return i;
+    i = i + 2;
+  }
+  return -1;
+}
+
 function frameStart(bytes, major) {
   if ((bytes[5] & 0x40) === 0) return 10;
   return major === 4 ? 14 + syncSafe(bytes, 10) : 14 + uint32(bytes, 10);
@@ -70,4 +99,13 @@ function syncSafe(bytes, offset) {
 
 function uint32(bytes, offset) {
   return (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3];
+}
+
+function base64(bytes) {
+  if (globalThis.Buffer) return globalThis.Buffer.from(bytes).toString("base64");
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return globalThis.btoa(binary);
 }

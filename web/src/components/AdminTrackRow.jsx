@@ -1,6 +1,7 @@
 import React from "react";
 import { Button } from "./ui/button.jsx";
 import { AdminTrackEditor } from "./AdminTrackEditor.jsx";
+import { CoverImage } from "./CoverImage.jsx";
 
 export function AdminTrackRow({ editing, onDelete, onEdit, onSave, track }) {
   if (editing) {
@@ -14,7 +15,8 @@ export function AdminTrackRow({ editing, onDelete, onEdit, onSave, track }) {
   }
 
   return (
-    <div className="grid gap-3 rounded-md border border-border bg-background p-3 sm:grid-cols-[1fr_auto]">
+    <div className="grid gap-3 rounded-md border border-border bg-background p-3 sm:grid-cols-[3.5rem_1fr_auto]">
+      <CoverImage track={track} className="size-14" />
       <div className="min-w-0">
         <p className="truncate text-sm font-medium">{track.title}</p>
         <p className="truncate text-xs text-muted">{track.artist || "Unknown artist"} · {track.playlistName}</p>

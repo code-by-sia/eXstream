@@ -10,11 +10,12 @@ const covers = [
 ];
 
 export function coverForTrack(track) {
+  if (track?.coverUrl) return track.coverUrl;
   const key = `${track?.title || ""}${track?.artist || ""}`;
   const sum = key.split("").reduce((total, char) => total + char.charCodeAt(0), 0);
   return covers[sum % covers.length];
 }
 
-export function CoverImage({ track, className = "aspect-square" }) {
-  return <img src={coverForTrack(track)} alt="" className={`w-full rounded-md object-cover ${className}`} loading="lazy" />;
+export function CoverImage({ track, className = "aspect-square w-full" }) {
+  return <img src={coverForTrack(track)} alt="" className={`rounded-md object-cover ${className}`} loading="lazy" />;
 }

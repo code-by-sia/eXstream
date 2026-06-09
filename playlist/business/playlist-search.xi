@@ -66,7 +66,8 @@ mapper appendMusicMatches(out: String, first: Bool, q: String, playlistId: Strin
                     + "\"title\":" + jsonString(parts.data[1]) + ","
                     + "\"artist\":" + jsonString(parts.data[2]) + ","
                     + "\"url\":" + jsonString(parts.data[3]) + ","
-                    + "\"addedBy\":" + jsonString(parts.data[4])
+                    + "\"addedBy\":" + jsonString(parts.data[4]) + ","
+                    + "\"coverUrl\":" + jsonString(lineOr(parts, 5))
                     + "}"
             }
         }

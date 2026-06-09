@@ -179,6 +179,8 @@ components:
           type: string
         url:
           type: string
+        coverUrl:
+          type: string
     Playlist:
       type: object
       properties:
@@ -208,4 +210,6 @@ components:
         url:
           type: string
         addedBy:
+          type: string
+        coverUrl:
           type: string

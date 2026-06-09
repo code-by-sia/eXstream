@@ -40,7 +40,7 @@ class PlaylistApi implements WebRequestHandler {
         let body = req.parse(TrackWrite)
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
-        let trackId = addTrack(id, body.title, body.artist, body.url, req.header("X-Username"))
+        let trackId = addTrack(id, body.title, body.artist, body.url, req.header("X-Username"), body.coverUrl)
         if text.isEmpty(trackId) { res.sendStatus(500, "failed to add track") return }
         res.sendText(200, playlistJson(id, readPlaylist(id)))
     }
@@ -56,7 +56,7 @@ class PlaylistApi implements WebRequestHandler {
         let body = req.parse(TrackWrite)
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
-        let result = updateTrack(id, trackIdFromTrackPath(req.path), body.title, body.artist, body.url)
+        let result = updateTrack(id, trackIdFromTrackPath(req.path), body.title, body.artist, body.url, body.coverUrl)
         sendTrackWriteResult(res, id, result)
     }
 
