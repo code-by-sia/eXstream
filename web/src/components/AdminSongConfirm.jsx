@@ -1,28 +1,35 @@
 import React from "react";
 import { Button } from "./ui/button.jsx";
+import { Input } from "./ui/input.jsx";
 
 export function AdminSongConfirm({ disabled, pending, onCancel, onConfirm }) {
   if (!pending) return null;
 
+  function submit(event) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    onConfirm({ ...pending, artist: form.get("artist"), title: form.get("title") });
+  }
+
   return (
-    <div className="mt-4 grid gap-3 rounded-md border border-border bg-background p-3 text-sm">
+    <form className="mt-4 grid gap-3 rounded-md border border-border bg-background p-3 text-sm" onSubmit={submit}>
       <div>
         <p className="font-medium">Create this song in the library?</p>
-        <p className="text-xs text-muted">The file upload is complete. Confirm to add it to the playlist.</p>
+        <p className="text-xs text-muted">The file upload is complete. Review the detected metadata.</p>
       </div>
-      <div className="grid gap-1 text-xs text-muted">
-        <span>Title: {pending.title}</span>
-        <span>Artist: {pending.artist || "Unknown artist"}</span>
-        <span>Playlist: {pending.playlistName}</span>
+      <div className="grid gap-2">
+        <Input name="title" defaultValue={pending.title} placeholder="Title" required disabled={disabled} />
+        <Input name="artist" defaultValue={pending.artist} placeholder="Artist" disabled={disabled} />
+        <p className="text-xs text-muted">Playlist: {pending.playlistName}</p>
       </div>
       <div className="flex flex-wrap gap-2">
-        <Button type="button" onClick={onConfirm} disabled={disabled}>
+        <Button type="submit" disabled={disabled}>
           Create song in library
         </Button>
         <Button type="button" variant="outline" onClick={onCancel} disabled={disabled}>
           Cancel
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

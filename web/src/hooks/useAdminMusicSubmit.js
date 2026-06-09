@@ -1,7 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { createLibrarySong, trackFromForm } from "../api/admin-music.js";
+import { createLibrarySong, trackFromUpload } from "../api/admin-music.js";
 import { uploadMusicFile } from "../api/files.js";
+import { readMusicMetadata } from "../api/music-metadata.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 
 export const idleUploadStatus = { phase: "idle", progress: 0, message: "" };
@@ -14,9 +15,9 @@ export function useAdminMusicSubmit(refresh) {
   const [lastLink, setLastLink] = React.useState("");
   const [pending, setPending] = React.useState();
   const [status, setStatus] = React.useState(idleUploadStatus);
-  const busy = status.phase === "uploading" || status.phase === "saving";
+  const busy = status.phase === "uploading" || status.phase === "metadata" || status.phase === "saving";
   const formDisabled = busy || Boolean(pending);
-  const submitLabel = pending ? "Confirm below" : status.phase === "uploading" ? "Uploading..." : "Upload file";
+  const submitLabel = pending ? "Confirm below" : busy ? "Working..." : "Upload file";
 
   async function submit(event) {
     event.preventDefault();
@@ -36,26 +37,28 @@ export function useAdminMusicSubmit(refresh) {
       setLastLink("");
       setStatus({ phase: "uploading", progress: 35, message: "Uploading file..." });
       const url = await uploadMusicFile(token, file);
+      setStatus({ phase: "metadata", progress: 55, message: "Reading browser metadata..." });
+      const metadata = await readMusicMetadata(file);
       setLastLink(url);
-      setPending(trackFromForm(form, playlist, url));
-      setStatus({ phase: "uploaded", progress: 65, message: "File uploaded. Confirm the song entry." });
+      setPending(trackFromUpload(form, playlist, url, metadata));
+      setStatus({ phase: "uploaded", progress: 70, message: "File uploaded. Review the detected song details." });
     } catch (error) {
       setStatus({ phase: "error", progress: 100, message: error.message || "Upload failed." });
     }
   }
 
-  async function confirmSong() {
-    if (!pending) return;
+  async function confirmSong(track = pending) {
+    if (!track) return;
 
     try {
       setStatus({ phase: "saving", progress: 85, message: "Creating song in library..." });
-      const playlist = await createLibrarySong(token, pending);
+      const playlist = await createLibrarySong(token, track);
       setSelected(playlist);
       await refresh();
       formRef.current?.reset();
       setPending(undefined);
       setStatus({ phase: "done", progress: 100, message: "Song created. Showing it in the library." });
-      navigate(`/playlists/${pending.playlistId}`);
+      navigate(`/playlists/${track.playlistId}`);
     } catch (error) {
       setStatus({ phase: "error", progress: 100, message: error.message || "Could not create song." });
     }

@@ -11,8 +11,6 @@ export function AdminMusicForm({ disabled, label, playlists, onSubmit }) {
           <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
         ))}
       </Select>
-      <Input name="title" placeholder="Title" required disabled={disabled} />
-      <Input name="artist" placeholder="Artist" disabled={disabled} />
       <Input name="file" type="file" accept="audio/*" required disabled={disabled} />
       <Button type="submit" disabled={disabled}>
         {label}

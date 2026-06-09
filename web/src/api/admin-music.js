@@ -1,11 +1,11 @@
 import { request } from "./client.js";
 
-export function trackFromForm(form, playlist, url) {
+export function trackFromUpload(form, playlist, url, metadata) {
   return {
-    artist: form.get("artist"),
+    artist: metadata.artist || "",
     playlistId: form.get("playlistId"),
     playlistName: playlist.options[playlist.selectedIndex]?.text || "Selected playlist",
-    title: form.get("title"),
+    title: metadata.title,
     url,
   };
 }
