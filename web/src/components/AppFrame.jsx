@@ -4,10 +4,10 @@ import { Sidebar } from "./Sidebar.jsx";
 
 export function AppFrame({ refresh, children, player = true }) {
   return (
-    <main className="min-h-screen w-full bg-background text-foreground">
-      <section className="grid min-h-screen overflow-hidden lg:grid-cols-[292px_1fr]">
+    <main className="app-shell">
+      <section className="app-grid">
         <Sidebar refresh={refresh} />
-        <section className="grid min-w-0 grid-rows-[1fr_auto] border-border bg-card/95 lg:border-l">
+        <section className="app-content">
           {children}
           {player && <PlayerBar />}
         </section>

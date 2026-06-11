@@ -24,10 +24,10 @@ export function LibraryNav() {
   const playlistItems = playlists.slice(0, 8).map((playlist) => ({ label: playlist.name, to: `/playlists/${playlist.id}`, icon: ListMusic }));
 
   return (
-    <nav className="grid gap-7 max-lg:gap-4">
+    <nav className="library-nav">
       <SidebarSection title="Discover" items={[...discover, ...admin]} />
       <SidebarSection title="Library" items={library} />
-      <SidebarSection className="max-lg:hidden" title="Playlists" items={playlistItems} />
+      <SidebarSection className="sidebar-playlists-group" title="Playlists" items={playlistItems} />
     </nav>
   );
 }

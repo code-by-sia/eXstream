@@ -5,19 +5,19 @@ export function AdminUploadStatus({ status, lastLink }) {
   if (status.phase === "idle" && !lastLink) return null;
 
   return (
-    <div className="mt-4 grid gap-2 rounded-md border border-border bg-background p-3 text-sm">
+    <div className="upload-status">
       {status.phase !== "idle" && (
         <>
-          <div className="flex items-center justify-between gap-3">
-            <span className={status.phase === "error" ? "text-red-600 dark:text-red-400" : "text-foreground"}>
+          <div className="upload-status-row">
+            <span className={status.phase === "error" ? "upload-message-error" : "upload-message"}>
               {status.message}
             </span>
-            <span className="text-xs text-muted">{status.progress}%</span>
+            <span className="upload-progress-text">{status.progress}%</span>
           </div>
           <Progress value={status.progress} />
         </>
       )}
-      {lastLink && <p className="break-all text-xs text-muted">Stored as {lastLink}</p>}
+      {lastLink && <p className="upload-link">Stored as {lastLink}</p>}
     </div>
   );
 }

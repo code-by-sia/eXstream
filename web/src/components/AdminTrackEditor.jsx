@@ -15,11 +15,11 @@ export function AdminTrackEditor({ onCancel, onSave, track }) {
   }
 
   return (
-    <form className="grid gap-2 rounded-md border border-border bg-background p-3" onSubmit={submit}>
+    <form className="admin-editor" onSubmit={submit}>
       <Input name="title" defaultValue={track.title} placeholder="Title" required />
       <Input name="artist" defaultValue={track.artist} placeholder="Artist" />
       <Input name="url" defaultValue={track.url} placeholder="File URL" required />
-      <div className="flex flex-wrap gap-2">
+      <div className="admin-editor-actions">
         <Button type="submit">Save</Button>
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
       </div>

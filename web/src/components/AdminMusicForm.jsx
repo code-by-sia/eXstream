@@ -5,7 +5,7 @@ import { Select } from "./ui/select.jsx";
 
 export function AdminMusicForm({ disabled, label, playlists, onSubmit }) {
   return (
-    <form className="grid gap-3" onSubmit={onSubmit}>
+    <form className="admin-music-form" onSubmit={onSubmit}>
       <Select name="playlistId" required disabled={disabled}>
         {playlists.map((playlist) => (
           <option key={playlist.id} value={playlist.id}>{playlist.name}</option>

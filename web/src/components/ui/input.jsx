@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils.js";
 export function Input({ className, ...props }) {
   return (
     <input
-      className={cn("min-h-10 w-full rounded-md border border-border bg-background/80 px-3 text-sm outline-focus transition focus:border-focus", className)}
+      className={cn("ui-input", className)}
       {...props}
     />
   );

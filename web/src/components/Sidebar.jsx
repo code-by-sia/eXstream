@@ -19,13 +19,13 @@ export function Sidebar({ refresh }) {
   }
 
   return (
-    <SidebarShell className="bg-background/90 backdrop-blur max-lg:border-r-0 max-lg:border-b">
+    <SidebarShell className="app-sidebar">
       <SidebarHeader>
-        <div className="flex items-center gap-3 rounded-md bg-card p-2 shadow-sm">
-          <img src="/icons/icon.svg" alt="" className="h-12 w-12 rounded-md" />
+        <div className="sidebar-brand">
+          <img src="/icons/icon.svg" alt="" className="sidebar-logo" />
           <div>
-            <h1 className="text-xl font-bold leading-none">eXstream</h1>
-            <p className="mt-1 text-xs text-muted">Stream library</p>
+            <h1 className="sidebar-title">eXstream</h1>
+            <p className="sidebar-subtitle">Stream library</p>
           </div>
         </div>
         <ProfileSummary />
@@ -35,11 +35,11 @@ export function Sidebar({ refresh }) {
       </SidebarContent>
       <Separator />
       <SidebarFooter>
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="sidebar-footer-actions">
           <Button type="button" variant="outline" onClick={signOut}>Logout</Button>
           <ThemeToggle />
         </div>
-        <div className="max-lg:hidden">
+        <div className="sidebar-desktop-only">
           <PlaylistCreator refresh={refresh} />
         </div>
       </SidebarFooter>

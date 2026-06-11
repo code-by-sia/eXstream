@@ -14,14 +14,14 @@ export function AdminMusicManager({ refresh }) {
   const heroTrack = playlists.flatMap((playlist) => playlist.tracks)[0];
 
   return (
-    <section className="min-h-0 overflow-y-auto p-4 md:p-6 lg:p-8">
-      <div className="mx-auto grid max-w-7xl gap-8">
+    <section className="admin-page-shell">
+      <div className="admin-page-content">
         <PageHero
           title="Music Admin"
           subtitle="Upload tracks, review metadata, and manage the library."
           track={heroTrack}
         />
-        <Card className="bg-background/70">
+        <Card className="admin-card">
           <CardHeader>
             <CardTitle>Add a track</CardTitle>
             <CardDescription>Audio is uploaded first, then stored as a playlist track.</CardDescription>

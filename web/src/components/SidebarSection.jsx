@@ -13,8 +13,8 @@ export function SidebarSection({ className, title, items }) {
         {items.map(({ label, to, icon: Icon }) => (
           <Link key={label} to={to}>
             <SidebarMenuButton active={activeFor(to)}>
-              {Icon && <Icon className="h-4 w-4" />}
-              <span className="truncate">{label}</span>
+              {Icon && <Icon className="sidebar-item-icon" />}
+              <span className="sidebar-item-label">{label}</span>
             </SidebarMenuButton>
           </Link>
         ))}

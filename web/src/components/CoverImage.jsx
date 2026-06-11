@@ -16,6 +16,6 @@ export function coverForTrack(track) {
   return covers[sum % covers.length];
 }
 
-export function CoverImage({ track, className = "aspect-square w-full" }) {
-  return <img src={coverForTrack(track)} alt="" className={`rounded-md object-cover ${className}`} loading="lazy" />;
+export function CoverImage({ track, className = "cover-image-default" }) {
+  return <img src={coverForTrack(track)} alt="" className={`cover-image ${className}`} loading="lazy" />;
 }

@@ -14,8 +14,8 @@ export function AdminMusicLibrary({ playlists, refresh }) {
         <CardTitle>Music library</CardTitle>
         <CardDescription>Edit or delete songs that are already in playlists.</CardDescription>
       </CardHeader>
-      <CardContent className="grid gap-3">
-        {tracks.length === 0 && <p className="text-sm text-muted">No songs yet.</p>}
+      <CardContent className="admin-library-content">
+        {tracks.length === 0 && <p className="admin-empty">No songs yet.</p>}
         {tracks.map((track) => (
           <AdminTrackRow
             key={track.manageKey}
@@ -26,7 +26,7 @@ export function AdminMusicLibrary({ playlists, refresh }) {
             onDelete={actions.remove}
           />
         ))}
-        {actions.message && <p className="text-xs text-muted">{actions.message}</p>}
+        {actions.message && <p className="admin-message">{actions.message}</p>}
       </CardContent>
     </Card>
   );

@@ -23,18 +23,18 @@ export function LibraryActions({ refresh }) {
   }
 
   return (
-    <div className="grid gap-3 md:grid-cols-[minmax(220px,420px)_auto]">
-      <form className="relative" onSubmit={(event) => search(event).catch(() => {})}>
-        <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted" />
-        <Input name="q" defaultValue={current} className="pl-9" placeholder="Search music, artists, playlists" />
+    <div className="library-actions">
+      <form className="library-search-form" onSubmit={(event) => search(event).catch(() => {})}>
+        <Search className="library-search-icon" />
+        <Input name="q" defaultValue={current} className="library-search-input" placeholder="Search music, artists, playlists" />
       </form>
-      <div className="flex flex-wrap gap-2">
+      <div className="library-action-buttons">
         <Button type="button" variant="outline" onClick={() => refresh().catch(alert)} aria-label="Refresh">
-          <RefreshCw className="h-4 w-4" />
+          <RefreshCw className="icon-sm" />
         </Button>
         {profile?.role === "ADMIN" ? (
           <Button type="button" onClick={() => navigate("/admin/music")}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add music
+            <PlusCircle className="button-icon-gap" /> Add music
           </Button>
         ) : null}
       </div>

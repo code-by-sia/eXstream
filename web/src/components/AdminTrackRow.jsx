@@ -15,14 +15,14 @@ export function AdminTrackRow({ editing, onDelete, onEdit, onSave, track }) {
   }
 
   return (
-    <div className="grid gap-3 rounded-md border border-border bg-background p-3 sm:grid-cols-[3.5rem_1fr_auto]">
-      <CoverImage track={track} className="size-14" />
-      <div className="min-w-0">
-        <p className="truncate text-sm font-medium">{track.title}</p>
-        <p className="truncate text-xs text-muted">{track.artist || "Unknown artist"} · {track.playlistName}</p>
-        <p className="truncate text-xs text-muted">{track.url}</p>
+    <div className="admin-track-row">
+      <CoverImage track={track} className="cover-size-14" />
+      <div className="admin-track-meta">
+        <p className="admin-track-title">{track.title}</p>
+        <p className="admin-track-subtitle">{track.artist || "Unknown artist"} · {track.playlistName}</p>
+        <p className="admin-track-url">{track.url}</p>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="admin-track-actions">
         <Button type="button" variant="outline" onClick={() => onEdit(track.manageKey)}>Edit</Button>
         <Button type="button" variant="outline" onClick={() => onDelete(track)}>Delete</Button>
       </div>
