@@ -2,6 +2,9 @@
 
 eXstream is a Xi-based music streaming web app with separate services for ingress, auth, file storage, playlists, and the web player.
 
+<img width="1624" height="1005" alt="demo" src="https://github.com/user-attachments/assets/3c66c206-6c2e-4298-876e-aaeb1a71c5d8" />
+
+
 ## Modules
 
 - `api`: Traefik ingress and reverse proxy. Protected routes use a ForwardAuth helper that verifies the bearer JWT and forwards `X-Username` and `X-Role`.
