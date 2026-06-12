@@ -1,8 +1,9 @@
 import React from "react";
-import { PlusCircle, RefreshCw, Search } from "lucide-react";
+import { RefreshCw, Search } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { request } from "../api/client.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
+import { AddMusicDialog } from "./AddMusicDialog.jsx";
 import { Button } from "./ui/button.jsx";
 import { Input } from "./ui/input.jsx";
 
@@ -32,11 +33,7 @@ export function LibraryActions({ refresh }) {
         <Button type="button" variant="outline" onClick={() => refresh().catch(alert)} aria-label="Refresh">
           <RefreshCw className="icon-sm" />
         </Button>
-        {profile?.role === "ADMIN" ? (
-          <Button type="button" onClick={() => navigate("/admin/music")}>
-            <PlusCircle className="button-icon-gap" /> Add music
-          </Button>
-        ) : null}
+        {profile?.role === "ADMIN" ? <AddMusicDialog refresh={refresh} /> : null}
       </div>
     </div>
   );

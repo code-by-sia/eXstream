@@ -5,6 +5,7 @@ const variants = {
   default: "ui-button-default",
   outline: "ui-button-outline",
   ghost: "ui-button-ghost",
+  danger: "ui-button-danger",
 };
 
 export function Button({ className, variant, ...props }) {

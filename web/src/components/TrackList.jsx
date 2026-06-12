@@ -1,6 +1,7 @@
 import React from "react";
 import { Play } from "lucide-react";
 import { CoverImage } from "./CoverImage.jsx";
+import { TrackAdminActions } from "./TrackAdminActions.jsx";
 import { isCurrentTrack, usePlayerStore } from "../store/usePlayerStore.js";
 
 function NowPlayingBars() {
@@ -13,7 +14,7 @@ function NowPlayingBars() {
   );
 }
 
-export function TrackList({ tracks }) {
+export function TrackList({ refresh, tracks }) {
   const setNowPlaying = usePlayerStore((s) => s.setNowPlaying);
   const nowPlaying = usePlayerStore((s) => s.nowPlaying);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -24,14 +25,12 @@ export function TrackList({ tracks }) {
       {tracks.map((track, index) => {
         const current = isCurrentTrack(nowPlaying, track);
         return (
-          <button
-            type="button"
+          <div
             key={`${track.playlistId}-${track.id}`}
             className={current ? "track-row track-row-current" : "track-row"}
             onClick={() => setNowPlaying(track, tracks)}
-            aria-label={`Play ${track.title}`}
           >
-            <span className="track-row-index">
+            <button type="button" className="track-row-index" aria-label={`Play ${track.title}`}>
               {current && isPlaying ? (
                 <NowPlayingBars />
               ) : (
@@ -40,14 +39,15 @@ export function TrackList({ tracks }) {
                   <Play className="icon-xs icon-fill-current track-row-index-play" />
                 </>
               )}
-            </span>
+            </button>
             <CoverImage track={track} className="cover-size-12" />
             <span className="track-row-meta">
               <span className="track-row-title">{track.title}</span>
               <span className="track-row-subtitle">{track.artist || "Unknown artist"}</span>
             </span>
             <span className="track-row-context">{track.playlistName || "Library"}</span>
-          </button>
+            <TrackAdminActions track={track} refresh={refresh} />
+          </div>
         );
       })}
     </div>

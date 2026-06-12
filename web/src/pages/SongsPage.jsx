@@ -13,7 +13,7 @@ export function SongsPage({ refresh }) {
   return (
     <LibraryPageFrame refresh={refresh} heroExtras={<PlayAllActions tracks={tracks} />}>
       <PageSection title="All Songs" subtitle="Every saved track, ready for playback.">
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks} refresh={refresh} />
       </PageSection>
     </LibraryPageFrame>
   );

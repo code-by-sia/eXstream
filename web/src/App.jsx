@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { request } from "./api/client.js";
 import { AppFrame } from "./components/AppFrame.jsx";
-import { AdminMusicPage } from "./pages/AdminMusicPage.jsx";
 import { AlbumsPage } from "./pages/AlbumsPage.jsx";
 import { ArtistsPage } from "./pages/ArtistsPage.jsx";
 import { BrowsePage } from "./pages/BrowsePage.jsx";
@@ -46,7 +45,6 @@ export function App() {
         <Route path="/albums" element={<AlbumsPage refresh={refresh} />} />
         <Route path="/playlists/:playlistId" element={<PlaylistPage refresh={refresh} />} />
         <Route path="/search" element={<SearchPage refresh={refresh} />} />
-        <Route path="/admin/music" element={<AdminMusicPage refresh={refresh} />} />
       </Route>
       <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
     </Routes>

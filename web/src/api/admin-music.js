@@ -30,12 +30,3 @@ export function updateLibrarySong(token, track) {
 export function deleteLibrarySong(token, track) {
   return request(`/playlists/${track.playlistId}/tracks/${track.id}`, { token, method: "DELETE" });
 }
-
-export function managedTracks(playlists) {
-  return playlists.flatMap((playlist) => playlist.tracks.map((track) => ({
-    ...track,
-    manageKey: `${playlist.id}-${track.id}`,
-    playlistId: playlist.id,
-    playlistName: playlist.name,
-  })));
-}

@@ -14,7 +14,14 @@ export function Dialog({ open, onClose, title, description, children }) {
 
   if (!open) return null;
   return createPortal(
-    <div className="ui-dialog-overlay" role="presentation" onClick={onClose}>
+    <div
+      className="ui-dialog-overlay"
+      role="presentation"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClose();
+      }}
+    >
       <section
         role="dialog"
         aria-modal="true"

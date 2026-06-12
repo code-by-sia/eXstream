@@ -48,6 +48,26 @@
         @apply border-transparent bg-transparent text-foreground;
     }
 
+    .ui-button-danger {
+        @apply border-red-600 bg-red-600 text-white shadow-sm;
+    }
+
+    .ui-button-danger:hover {
+        filter: brightness(1.08);
+    }
+
+    .playlist-delete-trigger {
+        @apply text-red-600;
+    }
+
+    .dark .playlist-delete-trigger {
+        @apply text-red-400;
+    }
+
+    .playlist-delete-trigger:hover {
+        @apply border-red-600/40 bg-red-600/10;
+    }
+
     .ui-card {
         @apply rounded-xl border border-border bg-card shadow-sm;
     }
@@ -281,13 +301,11 @@
         @apply text-sm text-muted;
     }
 
-    .library-page-shell,
-    .admin-page-shell {
+    .library-page-shell {
         @apply min-h-0 overflow-y-auto p-4;
     }
 
-    .library-page-content,
-    .admin-page-content {
+    .library-page-content {
         @apply mx-auto grid max-w-7xl gap-8;
     }
 
@@ -329,6 +347,10 @@
 
     .hero-play-actions {
         @apply flex flex-wrap gap-2;
+    }
+
+    .hero-actions-row {
+        @apply flex flex-wrap items-center gap-2;
     }
 
     .library-actions {
@@ -432,8 +454,6 @@
     .album-card-subtitle,
     .playlist-subtitle,
     .track-row-subtitle,
-    .admin-track-subtitle,
-    .admin-track-url,
     .confirm-subtitle,
     .confirm-playlist,
     .upload-progress-text,
@@ -528,8 +548,8 @@
     }
 
     .track-row {
-        @apply grid w-full items-center gap-3 border-b border-border bg-card p-2.5 pr-4 text-left transition;
-        grid-template-columns: 2.25rem 3rem 1fr;
+        @apply grid w-full cursor-pointer items-center gap-3 border-b border-border bg-card p-2.5 pr-4 text-left transition;
+        grid-template-columns: 2.25rem 3rem 1fr auto;
     }
 
     .track-row:last-child {
@@ -541,7 +561,7 @@
     }
 
     .track-row-index {
-        @apply grid place-items-center text-sm tabular-nums text-muted;
+        @apply grid cursor-pointer place-items-center border-0 bg-transparent p-0 text-sm tabular-nums text-muted;
     }
 
     .track-row-index-number {
@@ -553,13 +573,44 @@
     }
 
     .track-row:hover .track-row-index-number,
-    .track-row:focus-visible .track-row-index-number {
+    .track-row-index:focus-visible .track-row-index-number {
         @apply hidden;
     }
 
     .track-row:hover .track-row-index-play,
-    .track-row:focus-visible .track-row-index-play {
+    .track-row-index:focus-visible .track-row-index-play {
         @apply block;
+    }
+
+    .track-admin-actions {
+        @apply flex items-center gap-1;
+    }
+
+    .track-action-button {
+        @apply grid size-8 cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-muted transition;
+    }
+
+    .track-action-button:hover {
+        @apply bg-background text-foreground;
+    }
+
+    .track-action-danger:hover {
+        @apply text-red-600;
+    }
+
+    .dark .track-action-danger:hover {
+        @apply text-red-400;
+    }
+
+    @media (hover: hover) {
+        .track-admin-actions {
+            @apply opacity-0 transition-opacity;
+        }
+
+        .track-row:hover .track-admin-actions,
+        .track-row:focus-within .track-admin-actions {
+            @apply opacity-100;
+        }
     }
 
     .track-row-current .track-row-title {
@@ -593,10 +644,6 @@
 
     .now-playing-bars span:nth-child(3) {
         animation-delay: 0.5s;
-    }
-
-    .admin-card {
-        @apply bg-background/70;
     }
 
     .admin-music-form,
@@ -647,14 +694,6 @@
         @apply mt-1 flex justify-end gap-2;
     }
 
-    .admin-library-content {
-        @apply grid gap-3;
-    }
-
-    .admin-empty {
-        @apply text-sm text-muted;
-    }
-
     .admin-confirm-form {
         @apply mt-4 grid gap-3 rounded-lg border border-border bg-background p-3 text-sm;
     }
@@ -667,8 +706,7 @@
         @apply flex items-center gap-3 rounded-lg border border-border p-2;
     }
 
-    .confirm-art-meta,
-    .admin-track-meta {
+    .confirm-art-meta {
         @apply min-w-0;
     }
 
@@ -687,18 +725,6 @@
 
     .admin-editor {
         @apply grid gap-2 rounded-lg border border-border bg-background p-3;
-    }
-
-    .admin-track-row {
-        @apply grid gap-3 rounded-lg border border-border bg-background p-3;
-    }
-
-    .admin-track-title {
-        @apply truncate text-sm font-medium;
-    }
-
-    .admin-track-actions {
-        @apply flex items-center gap-2;
     }
 
     .upload-status {
@@ -888,12 +914,8 @@
             @apply grid-cols-8;
         }
 
-        .admin-track-row {
-            grid-template-columns: 3.5rem 1fr auto;
-        }
-
         .track-row {
-            grid-template-columns: 2.25rem 3rem 1fr 10rem;
+            grid-template-columns: 2.25rem 3rem 1fr 10rem auto;
         }
 
         .track-row-context {
@@ -902,8 +924,7 @@
     }
 
     @media (min-width: 768px) {
-        .library-page-shell,
-        .admin-page-shell {
+        .library-page-shell {
             @apply p-6;
         }
 
@@ -951,8 +972,7 @@
             @apply min-h-0 overflow-y-auto pr-1;
         }
 
-        .library-page-shell,
-        .admin-page-shell {
+        .library-page-shell {
             @apply p-8;
         }
 

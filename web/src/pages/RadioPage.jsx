@@ -16,7 +16,7 @@ export function RadioPage({ refresh }) {
         <PlaylistGrid playlists={playlistCards(playlists).slice(0, 6)} />
       </PageSection>
       <PageSection title="On Rotation" subtitle="A radio queue from your saved music.">
-        <TrackList tracks={tracks.slice(0, 12)} />
+        <TrackList tracks={tracks.slice(0, 12)} refresh={refresh} />
       </PageSection>
     </LibraryPageFrame>
   );

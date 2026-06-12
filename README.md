@@ -102,7 +102,8 @@ Useful web routes:
 - `/`: Music library home.
 - `/playlists/:id`: Deep link to a playlist.
 - `/search?q=term`: Deep link to music search results.
-- `/admin/music`: Admin-only music management.
+
+Admins manage music inline: an "Add music" button in the page hero uploads tracks, and track rows show edit/delete actions.
 
 The web app supports dark mode, mobile-friendly layouts, and PWA installation via its web manifest and service worker.
 Admin music management uploads audio through the file service, then stores the uploaded file path on playlist tracks.

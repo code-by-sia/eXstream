@@ -45,6 +45,7 @@ function json(res, body, status = 200) {
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://localhost");
+    if (req.method !== "GET") console.log(`${new Date().toISOString()} ${req.method} ${url.pathname}`);
     if (req.method === "POST" && (url.pathname === "/auth/login" || url.pathname === "/auth/register")) return json(res, profile);
     if (req.method === "POST" && url.pathname === "/playlists") {
       let body = "";
@@ -56,6 +57,35 @@ http
         json(res, playlist);
       });
       return;
+    }
+    if (req.method === "POST" && url.pathname === "/file") {
+      req.resume();
+      req.on("end", () => json(res, { url: `tone:${220 + Math.floor(Math.random() * 200)},330,392,494` }));
+      return;
+    }
+    const trackMatch = url.pathname.match(/^\/playlists\/([^/]+)\/tracks(?:\/([^/]+))?$/);
+    if (trackMatch) {
+      const playlist = playlists.find((p) => p.id === trackMatch[1]);
+      if (!playlist) return json(res, { error: "not found" }, 404);
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
+        const data = body ? JSON.parse(body) : {};
+        if (req.method === "POST") playlist.tracks.push({ id: `t-${Date.now()}`, ...data });
+        if (req.method === "PUT") {
+          const track = playlist.tracks.find((t) => t.id === trackMatch[2]);
+          if (track) Object.assign(track, data);
+        }
+        if (req.method === "DELETE") playlist.tracks = playlist.tracks.filter((t) => t.id !== trackMatch[2]);
+        json(res, playlist);
+      });
+      return;
+    }
+    if (req.method === "DELETE" && url.pathname.startsWith("/playlists/")) {
+      const index = playlists.findIndex((p) => url.pathname === `/playlists/${p.id}`);
+      if (index < 0) return json(res, { error: "not found" }, 404);
+      playlists.splice(index, 1);
+      return json(res, { ok: true, message: "deleted" });
     }
     if (url.pathname === "/auth/profile") return json(res, profile);
     if (url.pathname === "/playlists") return json(res, playlists);

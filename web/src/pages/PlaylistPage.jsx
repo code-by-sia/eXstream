@@ -2,6 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import { PageSection } from "../components/PageSection.jsx";
 import { PlayAllActions } from "../components/PlayAllActions.jsx";
+import { PlaylistDelete } from "../components/PlaylistDelete.jsx";
 import { TrackList } from "../components/TrackList.jsx";
 import { playlistById } from "../lib/library.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
@@ -21,10 +22,15 @@ export function PlaylistPage({ refresh }) {
       title={playlist?.name || "Playlist"}
       subtitle={subtitle}
       heroTrack={tracks[0]}
-      heroExtras={<PlayAllActions tracks={tracks} />}
+      heroExtras={
+        <div className="hero-actions-row">
+          <PlayAllActions tracks={tracks} />
+          <PlaylistDelete playlist={playlist} refresh={refresh} />
+        </div>
+      }
     >
       <PageSection title="Songs" subtitle={playlist?.description}>
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks} refresh={refresh} />
       </PageSection>
     </LibraryPageFrame>
   );

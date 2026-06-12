@@ -10,7 +10,10 @@ export default defineConfig({
     port: 7001,
     proxy: {
       "/auth": apiTarget,
-      "/playlists": apiTarget,
+      "/playlists": {
+        target: apiTarget,
+        bypass: (req) => ((req.headers.accept || "").includes("text/html") ? "/index.html" : undefined),
+      },
       "/playlist": apiTarget,
       "/music": apiTarget,
       "/file": apiTarget,

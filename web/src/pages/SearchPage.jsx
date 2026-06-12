@@ -15,7 +15,7 @@ export function SearchPage({ refresh }) {
   return (
     <LibraryPageFrame refresh={refresh} title={title}>
       <PageSection title="Results" subtitle={q ? "Tracks matching your search." : "No search submitted yet."}>
-        <TrackList tracks={tracks} />
+        <TrackList tracks={tracks} refresh={refresh} />
       </PageSection>
     </LibraryPageFrame>
   );

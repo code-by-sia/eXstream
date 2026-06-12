@@ -48,7 +48,7 @@ export function useAdminMusicSubmit(refresh) {
   }
 
   async function confirmSong(track = pending) {
-    if (!track) return;
+    if (!track) return false;
 
     try {
       setStatus({ phase: "saving", progress: 85, message: "Creating song in library..." });
@@ -59,8 +59,10 @@ export function useAdminMusicSubmit(refresh) {
       setPending(undefined);
       setStatus({ phase: "done", progress: 100, message: "Song created. Showing it in the library." });
       navigate(`/playlists/${track.playlistId}`);
+      return true;
     } catch (error) {
       setStatus({ phase: "error", progress: 100, message: error.message || "Could not create song." });
+      return false;
     }
   }
 

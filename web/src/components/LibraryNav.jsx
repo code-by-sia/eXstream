@@ -1,5 +1,5 @@
 import React from "react";
-import { Album, CirclePlay, Disc3, Grid2X2, ListMusic, Mic2, Music, Radio, UserRound } from "lucide-react";
+import { Album, CirclePlay, Grid2X2, ListMusic, Mic2, Music, Radio, UserRound } from "lucide-react";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 import { PlaylistCreator } from "./PlaylistCreator.jsx";
 import { SidebarSection } from "./SidebarSection.jsx";
@@ -20,13 +20,11 @@ const library = [
 
 export function LibraryNav({ refresh }) {
   const playlists = usePlayerStore((s) => s.playlists);
-  const profile = usePlayerStore((s) => s.profile);
-  const admin = profile?.role === "ADMIN" ? [{ label: "Music Admin", to: "/admin/music", icon: Disc3 }] : [];
   const playlistItems = playlists.map((playlist) => ({ label: playlist.name, to: `/playlists/${playlist.id}`, icon: ListMusic }));
 
   return (
     <nav className="library-nav">
-      <SidebarSection title="Discover" items={[...discover, ...admin]} />
+      <SidebarSection title="Discover" items={discover} />
       <SidebarSection title="Library" items={library} />
       <SidebarSection
         className="sidebar-playlists-group"
