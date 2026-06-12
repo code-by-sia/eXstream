@@ -1,0 +1,53 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "7099", "--strictPort"],
+      "cwd": "web",
+      "env": { "VITE_API_TARGET": "http://localhost:9099" },
+      "autoPort": false,
+      "port": 7099
+    },
+    {
+      "name": "web-gateway",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--port", "7099", "--strictPort"],
+      "cwd": "web",
+      "env": { "VITE_API_TARGET": "http://localhost:8080" },
+      "autoPort": false,
+      "port": 7099
+    },
+    {
+      "name": "mock-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/mock-api.mjs"],
+      "port": 9099
+    },
+    {
+      "name": "auth",
+      "runtimeExecutable": "xi",
+      "runtimeArgs": ["auth/auth-service.xi"],
+      "port": 4001
+    },
+    {
+      "name": "playlist",
+      "runtimeExecutable": "xi",
+      "runtimeArgs": ["playlist/playlist-service.xi"],
+      "port": 5001
+    },
+    {
+      "name": "file",
+      "runtimeExecutable": "xi",
+      "runtimeArgs": ["file/file-service.xi"],
+      "port": 6001
+    },
+    {
+      "name": "gateway-stack",
+      "runtimeExecutable": "docker",
+      "runtimeArgs": ["compose", "up", "--build", "traefik", "forward-auth", "auth", "playlist", "file"],
+      "port": 8080
+    }
+  ]
+}

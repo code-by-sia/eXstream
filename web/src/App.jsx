@@ -2,6 +2,7 @@ import React from "react";
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { request } from "./api/client.js";
+import { AppFrame } from "./components/AppFrame.jsx";
 import { AdminMusicPage } from "./pages/AdminMusicPage.jsx";
 import { AlbumsPage } from "./pages/AlbumsPage.jsx";
 import { ArtistsPage } from "./pages/ArtistsPage.jsx";
@@ -34,17 +35,19 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={token ? <Navigate to="/" replace /> : <LoginPage refresh={refresh} />} />
-      <Route path="/" element={<RequireAuth><HomePage refresh={refresh} /></RequireAuth>} />
-      <Route path="/browse" element={<RequireAuth><BrowsePage refresh={refresh} /></RequireAuth>} />
-      <Route path="/radio" element={<RequireAuth><RadioPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/library/playlists" element={<RequireAuth><PlaylistsPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/library/songs" element={<RequireAuth><SongsPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/made-for-you" element={<RequireAuth><MadeForYouPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/artists" element={<RequireAuth><ArtistsPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/albums" element={<RequireAuth><AlbumsPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/playlists/:playlistId" element={<RequireAuth><PlaylistPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/search" element={<RequireAuth><SearchPage refresh={refresh} /></RequireAuth>} />
-      <Route path="/admin/music" element={<RequireAuth><AdminMusicPage refresh={refresh} /></RequireAuth>} />
+      <Route element={<RequireAuth><AppFrame refresh={refresh} /></RequireAuth>}>
+        <Route path="/" element={<HomePage refresh={refresh} />} />
+        <Route path="/browse" element={<BrowsePage refresh={refresh} />} />
+        <Route path="/radio" element={<RadioPage refresh={refresh} />} />
+        <Route path="/library/playlists" element={<PlaylistsPage refresh={refresh} />} />
+        <Route path="/library/songs" element={<SongsPage refresh={refresh} />} />
+        <Route path="/made-for-you" element={<MadeForYouPage refresh={refresh} />} />
+        <Route path="/artists" element={<ArtistsPage refresh={refresh} />} />
+        <Route path="/albums" element={<AlbumsPage refresh={refresh} />} />
+        <Route path="/playlists/:playlistId" element={<PlaylistPage refresh={refresh} />} />
+        <Route path="/search" element={<SearchPage refresh={refresh} />} />
+        <Route path="/admin/music" element={<AdminMusicPage refresh={refresh} />} />
+      </Route>
       <Route path="*" element={<Navigate to={token ? "/" : "/login"} replace />} />
     </Routes>
   );

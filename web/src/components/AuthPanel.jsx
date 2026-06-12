@@ -29,9 +29,9 @@ export function AuthPanel({ refresh }) {
 
   return (
     <Card>
-      <CardContent className="p-4">
-        <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
-          <div className="grid grid-cols-2 gap-2">
+      <CardContent className="auth-card-content">
+        <form className="auth-form" onSubmit={(event) => submit(event).catch(alert)}>
+          <div className="auth-mode-grid">
             <Button type="button" variant={mode === "login" ? "default" : "outline"} onClick={() => setMode("login")}>Login</Button>
             <Button type="button" variant={mode === "register" ? "default" : "outline"} onClick={() => setMode("register")}>Register</Button>
           </div>

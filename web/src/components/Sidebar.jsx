@@ -28,7 +28,9 @@ export function Sidebar({ refresh }) {
             <p className="sidebar-subtitle">Stream library</p>
           </div>
         </div>
-        <ProfileSummary />
+        <div className="sidebar-desktop-only">
+          <ProfileSummary />
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <LibraryNav />

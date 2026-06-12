@@ -12,7 +12,7 @@ export function ThemeToggle() {
 
   return (
     <Button type="button" variant="outline" onClick={() => setDark((value) => !value)} aria-label="Toggle theme">
-      {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {dark ? <Sun className="icon-sm" /> : <Moon className="icon-sm" />}
     </Button>
   );
 }

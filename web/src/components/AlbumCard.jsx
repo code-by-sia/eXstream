@@ -3,11 +3,11 @@ import { Play } from "lucide-react";
 import { CoverImage } from "./CoverImage.jsx";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 
-export function AlbumCard({ track }) {
+export function AlbumCard({ track, queue }) {
   const setNowPlaying = usePlayerStore((s) => s.setNowPlaying);
 
   return (
-    <button type="button" className="album-card" onClick={() => setNowPlaying(track)}>
+    <button type="button" className="album-card" onClick={() => setNowPlaying(track, queue)}>
       <div className="album-card-inner">
         <div className="album-art-shell">
           <CoverImage track={track} className="album-cover" />

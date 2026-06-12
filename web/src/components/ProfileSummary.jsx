@@ -9,14 +9,14 @@ export function ProfileSummary() {
   const name = profile?.profileName || profile?.username || "Signed out";
 
   return (
-    <Card className="bg-background">
-      <CardContent className="flex min-w-0 items-center gap-3 p-3">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-accent text-xl">{avatar}</span>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{name}</p>
-          <p className="truncate text-xs text-muted">{profile?.username || "Signed out"}</p>
+    <Card className="profile-card">
+      <CardContent className="profile-content">
+        <span className="profile-avatar">{avatar}</span>
+        <div className="profile-info">
+          <p className="profile-name">{name}</p>
+          <p className="profile-username">{profile?.username || "Signed out"}</p>
         </div>
-        {profile?.role && <Badge className="ml-auto">{profile.role}</Badge>}
+        {profile?.role && <Badge className="profile-role-badge">{profile.role}</Badge>}
       </CardContent>
     </Card>
   );

@@ -27,9 +27,9 @@ export function PlaylistCreator({ refresh }) {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">New Playlist</CardTitle></CardHeader>
+      <CardHeader><CardTitle className="playlist-creator-title">New Playlist</CardTitle></CardHeader>
       <CardContent>
-        <form className="grid gap-3" onSubmit={(event) => submit(event).catch(alert)}>
+        <form className="playlist-creator-form" onSubmit={(event) => submit(event).catch(alert)}>
           <Input name="name" placeholder="Name" required />
           <Input name="description" placeholder="Description" />
           <Button type="submit" disabled={!token}>Create</Button>

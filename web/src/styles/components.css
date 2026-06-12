@@ -7,6 +7,10 @@
         @apply h-4 w-4;
     }
 
+    .icon-xs {
+        @apply h-3.5 w-3.5;
+    }
+
     .icon-fill-current {
         @apply fill-current;
     }
@@ -16,7 +20,7 @@
     }
 
     .ui-button {
-        @apply inline-flex min-h-10 items-center justify-center rounded-md border px-4 text-sm font-semibold transition;
+        @apply inline-flex min-h-10 items-center justify-center rounded-full border px-5 text-sm font-semibold transition;
     }
 
     .ui-button-default {
@@ -24,7 +28,11 @@
     }
 
     .ui-button-default:hover {
-        filter: brightness(0.95);
+        filter: brightness(1.08);
+    }
+
+    .ui-button-default:active {
+        @apply scale-[0.98];
     }
 
     .ui-button-outline {
@@ -41,7 +49,7 @@
     }
 
     .ui-card {
-        @apply rounded-lg border border-border bg-card shadow-sm;
+        @apply rounded-xl border border-border bg-card shadow-sm;
     }
 
     .ui-card-header {
@@ -66,7 +74,7 @@
 
     .ui-input,
     .ui-select {
-        @apply min-h-10 w-full rounded-md border border-border px-3 text-sm outline-focus transition;
+        @apply min-h-10 w-full rounded-lg border border-border px-3 text-sm outline-focus transition;
     }
 
     .ui-input {
@@ -83,7 +91,7 @@
     }
 
     .ui-badge {
-        @apply inline-flex min-h-6 items-center rounded-md border border-border bg-accent px-2 text-xs font-medium;
+        @apply inline-flex min-h-6 items-center rounded-full border border-border bg-accent px-2.5 text-xs font-medium;
     }
 
     .ui-progress {
@@ -119,31 +127,35 @@
     }
 
     .ui-sidebar-label {
-        @apply px-3 text-xs font-semibold uppercase tracking-wide text-muted;
+        @apply px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
     }
 
     .ui-sidebar-menu {
-        @apply grid gap-1;
+        @apply grid gap-0.5;
     }
 
     .ui-sidebar-button {
-        @apply flex min-h-10 items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground transition;
+        @apply flex min-h-10 items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted transition;
     }
 
     .ui-sidebar-button:hover {
-        @apply bg-accent;
+        @apply bg-accent text-foreground;
     }
 
     .ui-sidebar-button-active {
-        @apply bg-foreground text-background shadow-sm;
+        @apply bg-accent font-semibold text-foreground;
+    }
+
+    .ui-sidebar-button-active .sidebar-item-icon {
+        @apply text-primary;
     }
 
     .ui-tabs-list {
-        @apply inline-flex rounded-md bg-accent p-1;
+        @apply inline-flex rounded-full bg-accent p-1;
     }
 
     .ui-tabs-trigger {
-        @apply min-h-8 rounded-md border border-transparent px-3 text-sm font-medium;
+        @apply min-h-8 rounded-full border border-transparent px-3 text-sm font-medium;
     }
 
     .ui-tabs-trigger-active {
@@ -155,27 +167,27 @@
     }
 
     .app-grid {
-        @apply grid min-h-screen overflow-hidden;
+        @apply grid min-h-screen lg:h-screen lg:overflow-hidden;
     }
 
     .app-content {
-        @apply grid min-w-0 grid-rows-[1fr_auto] border-border bg-card/95;
+        @apply grid min-h-0 min-w-0 grid-rows-[1fr_auto] border-border bg-card/95;
     }
 
     .app-sidebar {
-        @apply bg-background/90 backdrop-blur;
+        @apply min-h-0 overflow-y-auto bg-background/90 backdrop-blur;
     }
 
     .sidebar-brand {
-        @apply flex items-center gap-3 rounded-md bg-card p-2 shadow-sm;
+        @apply flex items-center gap-3 px-1 py-2;
     }
 
     .sidebar-logo {
-        @apply h-12 w-12 rounded-md;
+        @apply h-10 w-10 rounded-xl shadow-sm;
     }
 
     .sidebar-title {
-        @apply text-xl font-bold leading-none;
+        @apply text-xl font-extrabold leading-none tracking-tight;
     }
 
     .sidebar-subtitle {
@@ -199,7 +211,7 @@
     }
 
     .sidebar-item-icon {
-        @apply h-4 w-4;
+        @apply h-4 w-4 transition-colors;
     }
 
     .sidebar-item-label {
@@ -219,11 +231,11 @@
     }
 
     .login-logo {
-        @apply grid h-14 w-14 place-items-center rounded-md bg-foreground text-xl font-bold text-white;
+        @apply grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-primary to-primary/70 text-xl font-bold text-white shadow-lg;
     }
 
     .login-title {
-        @apply text-3xl font-bold;
+        @apply text-3xl font-bold tracking-tight;
     }
 
     .login-subtitle {
@@ -241,15 +253,19 @@
     }
 
     .page-hero {
-        @apply grid gap-5 rounded-lg bg-gradient-to-br from-foreground/[0.08] via-card to-primary/[0.12] p-5;
+        @apply relative grid gap-5 overflow-hidden rounded-2xl border border-border/60 p-5;
+        background:
+            radial-gradient(120% 160% at 0% 0%, hsl(var(--primary) / 0.18), transparent 55%),
+            radial-gradient(110% 140% at 100% 100%, hsl(var(--foreground) / 0.08), transparent 60%),
+            hsl(var(--card));
     }
 
     .page-hero-body {
-        @apply grid content-end gap-3;
+        @apply grid content-end gap-4;
     }
 
     .page-hero-kicker {
-        @apply text-xs font-semibold uppercase tracking-wide text-muted;
+        @apply text-xs font-semibold uppercase tracking-[0.18em] text-primary;
     }
 
     .page-hero-copy {
@@ -257,7 +273,7 @@
     }
 
     .page-hero-title {
-        @apply break-words text-4xl font-black leading-none;
+        @apply break-words text-4xl font-black leading-none tracking-tight;
     }
 
     .page-hero-subtitle {
@@ -269,7 +285,11 @@
     }
 
     .page-hero-image {
-        @apply aspect-square w-full shadow-2xl;
+        @apply aspect-square w-full rounded-xl shadow-2xl ring-1 ring-black/10;
+    }
+
+    .hero-play-actions {
+        @apply flex flex-wrap gap-2;
     }
 
     .library-actions {
@@ -281,11 +301,11 @@
     }
 
     .library-search-icon {
-        @apply pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted;
+        @apply pointer-events-none absolute left-4 top-3 h-4 w-4 text-muted;
     }
 
     .library-search-input {
-        @apply pl-9;
+        @apply rounded-full bg-card/80 pl-10 shadow-sm;
     }
 
     .library-action-buttons {
@@ -319,7 +339,7 @@
     }
 
     .album-card {
-        @apply grid rounded-lg p-3 text-left transition;
+        @apply grid rounded-xl p-3 text-left transition duration-200;
     }
 
     .album-card:hover {
@@ -331,20 +351,30 @@
     }
 
     .album-art-shell {
-        @apply relative;
+        @apply relative overflow-hidden rounded-lg;
     }
 
     .album-cover,
     .playlist-cover {
-        @apply aspect-square w-full shadow-lg;
+        @apply aspect-square w-full shadow-lg transition duration-300;
+    }
+
+    .album-card:hover .album-cover,
+    .playlist-card:hover .playlist-cover {
+        @apply scale-[1.04];
     }
 
     .album-play-button {
-        @apply absolute bottom-2 right-2 grid size-10 place-items-center rounded-full bg-primary text-white opacity-0 shadow-lg transition;
+        @apply absolute bottom-2 right-2 grid size-10 translate-y-2 place-items-center rounded-full bg-primary text-white opacity-0 shadow-xl transition duration-200;
     }
 
-    .album-card:hover .album-play-button {
-        @apply opacity-100;
+    .album-card:hover .album-play-button,
+    .album-card:focus-visible .album-play-button {
+        @apply translate-y-0 opacity-100;
+    }
+
+    .album-play-button:hover {
+        @apply scale-105;
     }
 
     .album-card-copy,
@@ -404,7 +434,7 @@
     .playlist-empty,
     .artist-empty,
     .track-empty {
-        @apply text-sm text-muted;
+        @apply rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted;
     }
 
     .playlist-grid {
@@ -414,11 +444,15 @@
 
     .playlist-card,
     .artist-card {
-        @apply grid gap-3 rounded-lg bg-card transition;
+        @apply grid gap-3 rounded-xl bg-card transition duration-200;
     }
 
     .playlist-card {
-        @apply p-3;
+        @apply overflow-hidden p-3;
+    }
+
+    .playlist-card .playlist-cover {
+        @apply rounded-lg;
     }
 
     .playlist-card:hover,
@@ -444,7 +478,7 @@
     }
 
     .artist-badge-icon {
-        @apply absolute bottom-2 right-2 rounded-full bg-foreground p-2 text-background;
+        @apply absolute bottom-2 right-2 rounded-full bg-foreground p-2 text-background shadow-lg;
     }
 
     .artist-copy {
@@ -452,12 +486,12 @@
     }
 
     .track-list {
-        @apply grid overflow-hidden rounded-lg border border-border;
+        @apply grid overflow-hidden rounded-xl border border-border;
     }
 
     .track-row {
-        @apply grid items-center gap-3 border-b border-border bg-card p-3;
-        grid-template-columns: 3rem 1fr auto;
+        @apply grid w-full items-center gap-3 border-b border-border bg-card p-2.5 pr-4 text-left transition;
+        grid-template-columns: 2.25rem 3rem 1fr;
     }
 
     .track-row:last-child {
@@ -468,12 +502,59 @@
         @apply bg-accent;
     }
 
+    .track-row-index {
+        @apply grid place-items-center text-sm tabular-nums text-muted;
+    }
+
+    .track-row-index-number {
+        @apply block;
+    }
+
+    .track-row-index-play {
+        @apply hidden text-foreground;
+    }
+
+    .track-row:hover .track-row-index-number,
+    .track-row:focus-visible .track-row-index-number {
+        @apply hidden;
+    }
+
+    .track-row:hover .track-row-index-play,
+    .track-row:focus-visible .track-row-index-play {
+        @apply block;
+    }
+
+    .track-row-current .track-row-title {
+        @apply text-primary;
+    }
+
     .track-row-meta {
-        @apply min-w-0;
+        @apply grid min-w-0;
     }
 
     .track-row-title {
         @apply truncate text-sm font-semibold;
+    }
+
+    .track-row-context {
+        @apply hidden truncate text-xs text-muted sm:block;
+    }
+
+    .now-playing-bars {
+        @apply flex h-3.5 items-end gap-[2px];
+    }
+
+    .now-playing-bars span {
+        @apply w-[3px] rounded-sm bg-primary;
+        animation: now-playing-bounce 1s ease-in-out infinite;
+    }
+
+    .now-playing-bars span:nth-child(2) {
+        animation-delay: 0.25s;
+    }
+
+    .now-playing-bars span:nth-child(3) {
+        animation-delay: 0.5s;
     }
 
     .admin-card {
@@ -481,8 +562,13 @@
     }
 
     .admin-music-form,
-    .auth-form {
+    .auth-form,
+    .playlist-creator-form {
         @apply grid gap-3;
+    }
+
+    .playlist-creator-title {
+        @apply text-base;
     }
 
     .admin-library-content {
@@ -494,7 +580,7 @@
     }
 
     .admin-confirm-form {
-        @apply mt-4 grid gap-3 rounded-md border border-border bg-background p-3 text-sm;
+        @apply mt-4 grid gap-3 rounded-lg border border-border bg-background p-3 text-sm;
     }
 
     .confirm-title {
@@ -502,7 +588,7 @@
     }
 
     .confirm-art {
-        @apply flex items-center gap-3 rounded-md border border-border p-2;
+        @apply flex items-center gap-3 rounded-lg border border-border p-2;
     }
 
     .confirm-art-meta,
@@ -526,11 +612,11 @@
     }
 
     .admin-editor {
-        @apply grid gap-2 rounded-md border border-border bg-background p-3;
+        @apply grid gap-2 rounded-lg border border-border bg-background p-3;
     }
 
     .admin-track-row {
-        @apply grid gap-3 rounded-md border border-border bg-background p-3;
+        @apply grid gap-3 rounded-lg border border-border bg-background p-3;
     }
 
     .admin-track-title {
@@ -542,7 +628,7 @@
     }
 
     .upload-status {
-        @apply mt-4 grid gap-2 rounded-md border border-border bg-background p-3 text-sm;
+        @apply mt-4 grid gap-2 rounded-lg border border-border bg-background p-3 text-sm;
     }
 
     .upload-status-row {
@@ -586,7 +672,7 @@
     }
 
     .avatar-option {
-        @apply grid h-10 place-items-center rounded-md border text-lg transition;
+        @apply grid h-10 place-items-center rounded-lg border text-lg transition;
     }
 
     .avatar-option:hover {
@@ -610,7 +696,7 @@
     }
 
     .profile-avatar {
-        @apply grid h-10 w-10 shrink-0 place-items-center rounded-md bg-accent text-xl;
+        @apply grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent text-xl;
     }
 
     .profile-name {
@@ -622,12 +708,16 @@
     }
 
     .player-bar {
-        @apply grid gap-4 border-t border-border bg-background/90 p-4 backdrop-blur;
+        @apply sticky bottom-0 z-10 grid items-center gap-x-6 gap-y-3 border-t border-border bg-background/90 px-4 py-3 backdrop-blur;
     }
 
     .player-track {
-        @apply grid items-center gap-3;
+        @apply grid min-w-0 items-center gap-3;
         grid-template-columns: 3.5rem 1fr;
+    }
+
+    .player-cover {
+        @apply size-14 rounded-lg shadow-md ring-1 ring-black/10;
     }
 
     .player-meta {
@@ -635,15 +725,103 @@
     }
 
     .player-title {
-        @apply block truncate;
+        @apply block truncate text-sm font-semibold;
     }
 
     .player-subtitle {
-        @apply block truncate text-sm text-muted;
+        @apply block truncate text-xs text-muted;
+    }
+
+    .player-center {
+        @apply grid min-w-0 justify-items-center gap-1.5;
+    }
+
+    .player-controls {
+        @apply flex items-center gap-2;
+    }
+
+    .player-skip-button {
+        @apply grid size-9 place-items-center rounded-full text-muted transition;
+    }
+
+    .player-skip-button:hover:enabled {
+        @apply text-foreground;
+    }
+
+    .player-skip-button:disabled {
+        @apply opacity-40;
+    }
+
+    .player-play-button {
+        @apply grid size-10 place-items-center rounded-full bg-foreground text-background shadow-md transition;
+    }
+
+    .player-play-button:hover:enabled {
+        @apply scale-105;
+    }
+
+    .player-play-button:disabled {
+        @apply opacity-40;
+    }
+
+    .player-timeline {
+        @apply grid w-full max-w-xl items-center gap-3;
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .player-time {
+        @apply text-[11px] tabular-nums text-muted;
+    }
+
+    .player-side {
+        @apply hidden items-center justify-end gap-2 md:flex;
     }
 
     .player-audio {
-        @apply w-full;
+        @apply hidden;
+    }
+
+    .player-volume-icon {
+        @apply h-4 w-4 text-muted;
+    }
+
+    .player-range {
+        @apply h-1 w-full cursor-pointer appearance-none rounded-full;
+        background: linear-gradient(
+            to right,
+            hsl(var(--primary)) var(--fill, 0%),
+            hsl(var(--border)) var(--fill, 0%)
+        );
+    }
+
+    .player-range::-webkit-slider-thumb {
+        @apply appearance-none rounded-full bg-foreground opacity-0 shadow transition-opacity;
+        width: 12px;
+        height: 12px;
+    }
+
+    .player-range:hover::-webkit-slider-thumb,
+    .player-range:focus-visible::-webkit-slider-thumb {
+        @apply opacity-100;
+    }
+
+    .player-range::-moz-range-thumb {
+        @apply rounded-full border-0 bg-foreground opacity-0 shadow transition-opacity;
+        width: 12px;
+        height: 12px;
+    }
+
+    .player-range:hover::-moz-range-thumb,
+    .player-range:focus-visible::-moz-range-thumb {
+        @apply opacity-100;
+    }
+
+    .player-range:disabled {
+        @apply cursor-default opacity-50;
+    }
+
+    .player-volume-range {
+        @apply w-24;
     }
 
     @media (min-width: 640px) {
@@ -653,6 +831,14 @@
 
         .admin-track-row {
             grid-template-columns: 3.5rem 1fr auto;
+        }
+
+        .track-row {
+            grid-template-columns: 2.25rem 3rem 1fr 10rem;
+        }
+
+        .track-row-context {
+            @apply text-right;
         }
     }
 
@@ -684,14 +870,13 @@
         }
 
         .player-bar {
-            grid-template-columns: minmax(220px, 1fr) minmax(260px, 560px);
-            @apply items-center;
+            grid-template-columns: minmax(200px, 1fr) minmax(280px, 2fr) minmax(140px, 1fr);
         }
     }
 
     @media (min-width: 1024px) {
         .app-grid {
-            grid-template-columns: 292px 1fr;
+            grid-template-columns: 280px 1fr;
         }
 
         .app-content {
@@ -726,5 +911,16 @@
         .sidebar-playlists-group {
             @apply hidden;
         }
+    }
+}
+
+@keyframes now-playing-bounce {
+    0%,
+    100% {
+        height: 30%;
+    }
+
+    50% {
+        height: 100%;
     }
 }

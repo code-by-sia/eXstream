@@ -5,25 +5,25 @@
 @layer base {
   :root {
     color-scheme: light;
-    --background: 220 20% 96%;
+    --background: 220 25% 97%;
     --card: 0 0% 100%;
-    --foreground: 220 18% 8%;
-    --muted: 220 8% 43%;
-    --border: 220 14% 86%;
-    --primary: 348 85% 55%;
-    --accent: 220 18% 92%;
+    --foreground: 222 20% 9%;
+    --muted: 220 9% 44%;
+    --border: 220 14% 88%;
+    --primary: 352 88% 54%;
+    --accent: 220 16% 92%;
     --focus: 142 70% 40%;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 240 10% 7%;
-    --card: 240 8% 11%;
-    --foreground: 220 22% 96%;
-    --muted: 225 10% 65%;
-    --border: 240 8% 22%;
-    --primary: 348 85% 58%;
-    --accent: 240 7% 17%;
+    --background: 240 8% 5%;
+    --card: 240 6% 9%;
+    --foreground: 220 24% 97%;
+    --muted: 225 9% 62%;
+    --border: 240 7% 18%;
+    --primary: 352 92% 58%;
+    --accent: 240 6% 14%;
     --focus: 142 70% 45%;
   }
 
@@ -41,5 +41,25 @@
   input,
   select {
     @apply bg-card text-foreground;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+    background-color: hsl(var(--muted) / 0.45);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted) / 0.7);
   }
 }
