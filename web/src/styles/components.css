@@ -108,6 +108,13 @@
 
     .ui-sidebar {
         @apply grid content-start gap-5 border-r border-border p-4;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .ui-sidebar-header,
+    .ui-sidebar-footer,
+    .ui-sidebar-group {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .ui-sidebar-header {
@@ -126,8 +133,20 @@
         @apply grid gap-2;
     }
 
+    .ui-sidebar-label-row {
+        @apply flex items-center justify-between pr-1;
+    }
+
     .ui-sidebar-label {
         @apply px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-muted;
+    }
+
+    .sidebar-section-action {
+        @apply grid size-7 place-items-center rounded-full text-muted transition;
+    }
+
+    .sidebar-section-action:hover {
+        @apply bg-accent text-foreground;
     }
 
     .ui-sidebar-menu {
@@ -175,7 +194,7 @@
     }
 
     .app-sidebar {
-        @apply min-h-0 overflow-y-auto bg-background/90 backdrop-blur;
+        @apply min-h-0 bg-background/90 backdrop-blur;
     }
 
     .sidebar-brand {
@@ -183,23 +202,43 @@
     }
 
     .sidebar-logo {
-        @apply h-10 w-10 rounded-xl shadow-sm;
+        @apply h-9 w-9 rounded-xl shadow-sm;
     }
 
     .sidebar-title {
         @apply text-xl font-extrabold leading-none tracking-tight;
     }
 
-    .sidebar-subtitle {
-        @apply mt-1 text-xs text-muted;
+    .sidebar-profile {
+        @apply flex items-center gap-2.5 rounded-xl border border-border/60 bg-card/60 p-2;
     }
 
-    .sidebar-footer-actions {
-        @apply grid grid-cols-[1fr_auto] gap-2;
+    .sidebar-profile-avatar {
+        @apply grid size-9 shrink-0 place-items-center rounded-full bg-accent text-lg;
     }
 
-    .sidebar-desktop-only {
-        @apply block;
+    .sidebar-profile-info {
+        @apply min-w-0 flex-1;
+    }
+
+    .sidebar-profile-name {
+        @apply truncate text-sm font-semibold;
+    }
+
+    .sidebar-profile-username {
+        @apply truncate text-xs text-muted;
+    }
+
+    .sidebar-profile-actions {
+        @apply flex shrink-0 items-center gap-1;
+    }
+
+    .sidebar-icon-button {
+        @apply grid size-8 shrink-0 place-items-center rounded-full text-muted transition;
+    }
+
+    .sidebar-icon-button:hover {
+        @apply bg-accent text-foreground;
     }
 
     .library-nav {
@@ -395,7 +434,6 @@
     .track-row-subtitle,
     .admin-track-subtitle,
     .admin-track-url,
-    .profile-username,
     .confirm-subtitle,
     .confirm-playlist,
     .upload-progress-text,
@@ -567,8 +605,46 @@
         @apply grid gap-3;
     }
 
-    .playlist-creator-title {
-        @apply text-base;
+    .ui-dialog-overlay {
+        @apply fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur-sm;
+        animation: dialog-fade 0.15s ease;
+    }
+
+    .ui-dialog {
+        @apply w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-2xl;
+        animation: dialog-pop 0.18s ease;
+    }
+
+    .ui-dialog-header {
+        @apply mb-4 flex items-start justify-between gap-3;
+    }
+
+    .ui-dialog-heading {
+        @apply grid gap-1;
+    }
+
+    .ui-dialog-title {
+        @apply text-lg font-bold tracking-tight;
+    }
+
+    .ui-dialog-description {
+        @apply text-sm text-muted;
+    }
+
+    .ui-dialog-close {
+        @apply grid size-8 shrink-0 place-items-center rounded-full text-muted transition;
+    }
+
+    .ui-dialog-close:hover {
+        @apply bg-accent text-foreground;
+    }
+
+    .ui-dialog-body {
+        @apply grid gap-3;
+    }
+
+    .ui-dialog-actions {
+        @apply mt-1 flex justify-end gap-2;
     }
 
     .admin-library-content {
@@ -592,9 +668,7 @@
     }
 
     .confirm-art-meta,
-    .admin-track-meta,
-    .track-row-meta,
-    .profile-info {
+    .admin-track-meta {
         @apply min-w-0;
     }
 
@@ -687,26 +761,6 @@
         @apply border-border bg-card;
     }
 
-    .profile-card {
-        @apply bg-background;
-    }
-
-    .profile-content {
-        @apply flex min-w-0 items-center gap-3 p-3;
-    }
-
-    .profile-avatar {
-        @apply grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent text-xl;
-    }
-
-    .profile-name {
-        @apply truncate text-sm font-semibold;
-    }
-
-    .profile-role-badge {
-        @apply ml-auto;
-    }
-
     .player-bar {
         @apply sticky bottom-0 z-10 grid items-center gap-x-6 gap-y-3 border-t border-border bg-background/90 px-4 py-3 backdrop-blur;
     }
@@ -762,6 +816,11 @@
 
     .player-play-button:disabled {
         @apply opacity-40;
+    }
+
+    .player-repeat-active,
+    .player-repeat-active:hover:enabled {
+        @apply text-primary;
     }
 
     .player-timeline {
@@ -883,6 +942,15 @@
             @apply border-l;
         }
 
+        .ui-sidebar {
+            @apply h-full overflow-hidden;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+        }
+
+        .ui-sidebar-content {
+            @apply min-h-0 overflow-y-auto pr-1;
+        }
+
         .library-page-shell,
         .admin-page-shell {
             @apply p-8;
@@ -898,19 +966,55 @@
             @apply border-b border-r-0;
         }
 
-        .ui-sidebar-content,
+        .ui-sidebar {
+            @apply gap-3 p-3;
+        }
+
+        .sidebar-brand {
+            @apply py-1;
+        }
+
         .library-nav {
-            @apply gap-4;
+            @apply flex items-center gap-1.5 overflow-x-auto pb-1;
         }
 
+        .library-nav a {
+            @apply shrink-0;
+        }
+
+        .ui-sidebar-group,
         .ui-sidebar-menu {
-            @apply grid-cols-2;
+            @apply contents;
         }
 
-        .sidebar-desktop-only,
+        .ui-sidebar-label-row {
+            @apply hidden;
+        }
+
+        .ui-sidebar-button {
+            @apply min-h-9 gap-2 whitespace-nowrap rounded-full border border-border bg-card px-3 text-xs;
+        }
+
+        .ui-sidebar-button-active {
+            @apply border-transparent bg-foreground text-background;
+        }
+
         .sidebar-playlists-group {
             @apply hidden;
         }
+    }
+}
+
+@keyframes dialog-fade {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes dialog-pop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
     }
 }
 

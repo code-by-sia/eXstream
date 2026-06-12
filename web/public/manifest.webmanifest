@@ -4,8 +4,8 @@
   "description": "A music streaming player for eXstream.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#111827",
-  "theme_color": "#0f766e",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
   "icons": [
     {
       "src": "/icons/icon.svg",

@@ -1,9 +1,15 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Pause, Play, Repeat, Repeat1, SkipBack, SkipForward, Volume2 } from "lucide-react";
 import { resolveTrackSource } from "../api/files.js";
-import { usePlayerStore } from "../store/usePlayerStore.js";
+import { trackKey, usePlayerStore } from "../store/usePlayerStore.js";
 import { CoverImage } from "./CoverImage.jsx";
+
+const repeatLabels = {
+  off: "Repeat off",
+  all: "Repeat playlist",
+  one: "Repeat song",
+};
 
 function formatTime(seconds) {
   if (!Number.isFinite(seconds)) return "0:00";
@@ -19,6 +25,8 @@ export function PlayerBar() {
   const setIsPlaying = usePlayerStore((s) => s.setIsPlaying);
   const playNext = usePlayerStore((s) => s.playNext);
   const playPrevious = usePlayerStore((s) => s.playPrevious);
+  const repeat = usePlayerStore((s) => s.repeat);
+  const cycleRepeat = usePlayerStore((s) => s.cycleRepeat);
   const [source, setSource] = useState("");
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -38,6 +46,22 @@ export function PlayerBar() {
     audio.current.load();
     audio.current.play().catch(() => {});
   }, [source]);
+
+  useEffect(() => {
+    if (audio.current) audio.current.loop = repeat === "one";
+  }, [repeat]);
+
+  function handleEnded() {
+    const { queue, nowPlaying, repeat: mode } = usePlayerStore.getState();
+    const index = queue.findIndex((item) => trackKey(item) === trackKey(nowPlaying));
+    const isLast = index === queue.length - 1;
+    if (isLast && mode === "all" && trackKey(queue[0]) === trackKey(nowPlaying)) {
+      audio.current.currentTime = 0;
+      audio.current.play().catch(() => {});
+      return;
+    }
+    playNext();
+  }
 
   function togglePlay() {
     if (!audio.current || !source) return;
@@ -80,6 +104,15 @@ export function PlayerBar() {
           <button type="button" className="player-skip-button" onClick={playNext} disabled={!track} aria-label="Next track">
             <SkipForward className="icon-sm icon-fill-current" />
           </button>
+          <button
+            type="button"
+            className={repeat === "off" ? "player-skip-button" : "player-skip-button player-repeat-active"}
+            onClick={cycleRepeat}
+            aria-label={repeatLabels[repeat]}
+            title={repeatLabels[repeat]}
+          >
+            {repeat === "one" ? <Repeat1 className="icon-sm" /> : <Repeat className="icon-sm" />}
+          </button>
         </div>
         <div className="player-timeline">
           <span className="player-time">{formatTime(currentTime)}</span>
@@ -117,7 +150,7 @@ export function PlayerBar() {
         className="player-audio"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        onEnded={playNext}
+        onEnded={handleEnded}
         onTimeUpdate={(event) => setCurrentTime(event.target.currentTime)}
         onLoadedMetadata={(event) => setDuration(event.target.duration)}
       />

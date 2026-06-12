@@ -46,6 +46,17 @@ http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://localhost");
     if (req.method === "POST" && (url.pathname === "/auth/login" || url.pathname === "/auth/register")) return json(res, profile);
+    if (req.method === "POST" && url.pathname === "/playlists") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk));
+      req.on("end", () => {
+        const data = JSON.parse(body || "{}");
+        const playlist = { id: `pl-${Date.now()}`, name: data.name || "Untitled", description: data.description || "", owner: "test", tracks: [] };
+        playlists.push(playlist);
+        json(res, playlist);
+      });
+      return;
+    }
     if (url.pathname === "/auth/profile") return json(res, profile);
     if (url.pathname === "/playlists") return json(res, playlists);
     const byId = playlists.find((p) => url.pathname === `/playlists/${p.id}`);

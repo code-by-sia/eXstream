@@ -1,5 +1,6 @@
 import React from "react";
 import { PageSection } from "../components/PageSection.jsx";
+import { PlaylistCreator } from "../components/PlaylistCreator.jsx";
 import { PlaylistGrid } from "../components/PlaylistGrid.jsx";
 import { playlistCards } from "../lib/library.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
@@ -9,7 +10,10 @@ export function PlaylistsPage({ refresh }) {
   const playlists = usePlayerStore((s) => s.playlists);
 
   return (
-    <LibraryPageFrame refresh={refresh}>
+    <LibraryPageFrame
+      refresh={refresh}
+      heroExtras={<div className="hero-play-actions"><PlaylistCreator refresh={refresh} variant="button" /></div>}
+    >
       <PageSection title="Your Playlists" subtitle="Every saved collection in one place.">
         <PlaylistGrid playlists={playlistCards(playlists)} />
       </PageSection>
