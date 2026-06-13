@@ -11,13 +11,13 @@ module App {
     includes = ["./auth-service.xi", "../common/**"]
     excludes = ["./test/**"]
 
-    async entry main(args: String[]) -> Integer {
+    async entry (seeder:DataSeeder) main(args: String[]) -> Integer {
         let port = 4001
         if args.len >= 2 {
             let parsed = convert.parseInteger(args.data[1])
             if isOk(parsed) { port = parsed.value }
         }
-        seedDefaultUsers(App.resolve(UserRepository))
+        seeder.seedDefaultUsers()
         web.serve(port)
     }
 }

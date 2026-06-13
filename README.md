@@ -17,16 +17,16 @@ flowchart LR
     end
 
     subgraph services["Xi services"]
-        Auth["auth :4001"]
-        Playlist["playlist :5001"]
-        File["file :6001"]
+        Auth{{"auth :4001"}}
+        Playlist{{"playlist :5001"}}
+        File{{"file :6001"}}
     end
 
     Web["web :7001<br/>React SPA"]
 
     AuthData[("auth-data")]
     PlaylistData[("playlist-data")]
-    FileData[("file-data")]
+    FileData[\"bucket"/]
 
     Browser -->|"HTTP"| Traefik
     Traefik -->|"/ (SPA)"| Web
