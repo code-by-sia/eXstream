@@ -2,16 +2,16 @@
 
 This folder contains the Kubernetes objects for the whole stack, grouped by kind:
 
-| File | Objects |
-| --- | --- |
-| `namespace.yaml` | `exstream` Namespace |
-| `secrets.yaml` | `exstream-jwt` Secret (shared `JWT_SECRET`) |
-| `configmaps.yaml` | `web-nginx` ConfigMap (SPA-only nginx config) |
-| `volumes.yaml` | PersistentVolumeClaims: `auth-data`, `playlist-data`, `file-data` |
-| `deployments.yaml` | Deployments: `auth`, `playlist`, `file`, `forward-auth`, `web` |
-| `services.yaml` | ClusterIP Services for each Deployment |
-| `hpa.yaml` | HorizontalPodAutoscalers for `web` and `forward-auth` |
-| `ingressroute.yaml` | Traefik `Middleware` (ForwardAuth) + `IngressRoute` |
+| File                | Objects                                                           |
+|---------------------|-------------------------------------------------------------------|
+| `namespace.yaml`    | `exstream` Namespace                                              |
+| `secrets.yaml`      | `exstream-jwt` Secret (shared `JWT_SECRET`)                       |
+| `configmaps.yaml`   | `web-nginx` ConfigMap (SPA-only nginx config)                     |
+| `volumes.yaml`      | PersistentVolumeClaims: `auth-data`, `playlist-data`, `file-data` |
+| `deployments.yaml`  | Deployments: `auth`, `playlist`, `file`, `forward-auth`, `web`    |
+| `services.yaml`     | ClusterIP Services for each Deployment                            |
+| `hpa.yaml`          | HorizontalPodAutoscalers for `web` and `forward-auth`             |
+| `ingressroute.yaml` | Traefik `Middleware` (ForwardAuth) + `IngressRoute`               |
 
 ## Prerequisites
 
