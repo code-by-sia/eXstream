@@ -1,76 +1,85 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { createLibrarySong, trackFromUpload } from "../api/admin-music.js";
-import { uploadMusicFile } from "../api/files.js";
+import { createLibrarySong } from "../api/admin-music.js";
+import { uploadCoverArt, uploadMusicFile } from "../api/files.js";
 import { readMusicMetadata } from "../api/music-metadata.js";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 
-export const idleUploadStatus = { phase: "idle", progress: 0, message: "" };
-
+// Batch upload: for each selected mp3, upload the audio, read ID3 metadata,
+// cache the embedded album art via the file service, and create the song in
+// the chosen playlist. Reports per-file progress.
 export function useAdminMusicSubmit(refresh) {
   const token = usePlayerStore((s) => s.token);
   const setSelected = usePlayerStore((s) => s.setSelected);
   const navigate = useNavigate();
   const formRef = React.useRef();
-  const [lastLink, setLastLink] = React.useState("");
-  const [pending, setPending] = React.useState();
-  const [status, setStatus] = React.useState(idleUploadStatus);
-  const busy = status.phase === "uploading" || status.phase === "metadata" || status.phase === "saving";
-  const formDisabled = busy || Boolean(pending);
-  const submitLabel = pending ? "Confirm below" : busy ? "Working..." : "Upload file";
+  const [items, setItems] = React.useState([]);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState("");
+
+  function patch(index, fields) {
+    setItems((current) => current.map((item, i) => (i === index ? { ...item, ...fields } : item)));
+  }
 
   async function submit(event) {
     event.preventDefault();
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const playlist = formElement.elements.playlistId;
-    const file = form.get("file");
+    const playlistId = form.get("playlistId");
+    const files = Array.from(formElement.elements.file.files || []);
 
-    if (!file?.size) {
-      setStatus({ phase: "error", progress: 0, message: "Select an audio file first." });
+    if (!files.length) {
+      setError("Select at least one audio file.");
       return;
     }
 
-    try {
-      formRef.current = formElement;
-      setPending(undefined);
-      setLastLink("");
-      setStatus({ phase: "uploading", progress: 35, message: "Uploading file..." });
-      const url = await uploadMusicFile(token, file);
-      setStatus({ phase: "metadata", progress: 55, message: "Reading browser metadata..." });
-      const metadata = await readMusicMetadata(file);
-      setLastLink(url);
-      setPending(trackFromUpload(form, playlist, url, metadata));
-      setStatus({ phase: "uploaded", progress: 70, message: "File uploaded. Review the detected song details." });
-    } catch (error) {
-      setStatus({ phase: "error", progress: 100, message: error.message || "Upload failed." });
+    formRef.current = formElement;
+    setError("");
+    setBusy(true);
+    setItems(files.map((file) => ({ name: file.name, status: "pending", message: "" })));
+
+    let createdPlaylist;
+    for (let index = 0; index < files.length; index += 1) {
+      const file = files[index];
+      try {
+        patch(index, { status: "working", message: "Uploading audio…" });
+        const url = await uploadMusicFile(token, file);
+
+        patch(index, { message: "Reading tags…" });
+        const metadata = await readMusicMetadata(file);
+        const coverUrl = metadata.coverUrl ? await uploadCoverArt(token, metadata.coverUrl) : "";
+
+        createdPlaylist = await createLibrarySong(token, {
+          playlistId,
+          title: metadata.title,
+          artist: metadata.artist || "",
+          url,
+          coverUrl,
+        });
+        patch(index, { status: "done", title: metadata.title, hasArt: Boolean(coverUrl), message: coverUrl ? "Added · art cached" : "Added" });
+      } catch (failure) {
+        patch(index, { status: "error", message: failure.message || "Failed" });
+      }
     }
-  }
 
-  async function confirmSong(track = pending) {
-    if (!track) return false;
-
-    try {
-      setStatus({ phase: "saving", progress: 85, message: "Creating song in library..." });
-      const playlist = await createLibrarySong(token, track);
-      setSelected(playlist);
+    setBusy(false);
+    if (createdPlaylist) {
+      setSelected(createdPlaylist);
       await refresh();
-      formRef.current?.reset();
-      setPending(undefined);
-      setStatus({ phase: "done", progress: 100, message: "Song created. Showing it in the library." });
-      navigate(`/playlists/${track.playlistId}`);
-      return true;
-    } catch (error) {
-      setStatus({ phase: "error", progress: 100, message: error.message || "Could not create song." });
-      return false;
     }
   }
 
-  function cancelSong() {
-    setPending(undefined);
-    setLastLink("");
-    setStatus(idleUploadStatus);
+  function reset() {
+    formRef.current?.reset();
+    setItems([]);
+    setError("");
   }
 
-  return { busy, cancelSong, confirmSong, formDisabled, lastLink, pending, status, submit, submitLabel };
+  function done(playlistId) {
+    reset();
+    if (playlistId) navigate(`/playlists/${playlistId}`);
+  }
+
+  const finished = items.length > 0 && !busy;
+  return { busy, items, error, finished, submit, reset, done };
 }

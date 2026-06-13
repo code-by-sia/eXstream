@@ -37,9 +37,29 @@ const playlists = [
   },
 ];
 
+// In-memory file store (path -> content), mimicking the folder-backed file
+// service. Seeded with one cover so cover resolution can be exercised.
+const sampleCover =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>" +
+      "<rect width='300' height='300' fill='#1db954'/>" +
+      "<text x='50%' y='55%' text-anchor='middle' font-size='120' fill='white'>♫</text></svg>"
+  );
+const files = new Map([["covers/sample", sampleCover]]);
+playlists[0].tracks[0].coverUrl = "/file/covers/sample";
+
 function json(res, body, status = 200) {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+function readBody(req) {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", () => resolve(body));
+  });
 }
 
 http
@@ -62,6 +82,23 @@ http
       req.resume();
       req.on("end", () => json(res, { url: `tone:${220 + Math.floor(Math.random() * 200)},330,392,494` }));
       return;
+    }
+    if (url.pathname.startsWith("/file/")) {
+      const path = decodeURIComponent(url.pathname.slice("/file/".length));
+      if (req.method === "GET") {
+        if (!files.has(path)) return json(res, { error: "not found" }, 404);
+        return json(res, { path, content: files.get(path) });
+      }
+      if (req.method === "POST" || req.method === "PUT") {
+        readBody(req).then((body) => {
+          if (req.method === "POST" && files.has(path)) return json(res, { error: "exists" }, 409);
+          const data = body ? JSON.parse(body) : {};
+          files.set(path, data.content || "");
+          json(res, { ok: true, message: req.method === "POST" ? "created" : "updated" });
+        });
+        return;
+      }
+      if (req.method === "DELETE") { files.delete(path); return json(res, { ok: true, message: "deleted" }); }
     }
     const trackMatch = url.pathname.match(/^\/playlists\/([^/]+)\/tracks(?:\/([^/]+))?$/);
     if (trackMatch) {

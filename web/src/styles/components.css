@@ -582,6 +582,7 @@
         @apply block;
     }
 
+    .track-row-actions,
     .track-admin-actions {
         @apply flex items-center gap-1;
     }
@@ -603,14 +604,67 @@
     }
 
     @media (hover: hover) {
-        .track-admin-actions {
+        .track-row-actions {
             @apply opacity-0 transition-opacity;
         }
 
-        .track-row:hover .track-admin-actions,
-        .track-row:focus-within .track-admin-actions {
+        .track-row:hover .track-row-actions,
+        .track-row:focus-within .track-row-actions {
             @apply opacity-100;
         }
+    }
+
+    .batch-status {
+        @apply m-0 grid list-none gap-1.5 p-0;
+    }
+
+    .batch-row {
+        @apply grid items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm;
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .batch-name {
+        @apply truncate font-medium;
+    }
+
+    .batch-message {
+        @apply shrink-0 text-xs text-muted;
+    }
+
+    .batch-icon {
+        @apply text-muted;
+    }
+
+    .batch-done .batch-icon {
+        @apply text-focus;
+    }
+
+    .batch-error .batch-icon {
+        @apply text-red-500;
+    }
+
+    .batch-working .batch-icon {
+        @apply animate-spin;
+    }
+
+    .playlist-picker {
+        @apply m-0 grid max-h-72 list-none gap-1.5 overflow-y-auto p-0;
+    }
+
+    .playlist-picker-row {
+        @apply flex items-center justify-between gap-3 rounded-lg border border-border bg-background px-3 py-2;
+    }
+
+    .playlist-picker-name {
+        @apply truncate text-sm font-medium;
+    }
+
+    .playlist-picker-actions {
+        @apply flex shrink-0 gap-2;
+    }
+
+    .playlist-picker-button {
+        @apply min-h-8 gap-1 px-3 text-xs;
     }
 
     .track-row-current .track-row-title {

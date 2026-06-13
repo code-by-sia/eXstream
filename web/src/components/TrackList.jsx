@@ -1,5 +1,6 @@
 import React from "react";
 import { Play } from "lucide-react";
+import { AddToPlaylistButton } from "./AddToPlaylistButton.jsx";
 import { CoverImage } from "./CoverImage.jsx";
 import { TrackAdminActions } from "./TrackAdminActions.jsx";
 import { isCurrentTrack, usePlayerStore } from "../store/usePlayerStore.js";
@@ -46,7 +47,10 @@ export function TrackList({ refresh, tracks }) {
               <span className="track-row-subtitle">{track.artist || "Unknown artist"}</span>
             </span>
             <span className="track-row-context">{track.playlistName || "Library"}</span>
-            <TrackAdminActions track={track} refresh={refresh} />
+            <span className="track-row-actions">
+              <AddToPlaylistButton track={track} refresh={refresh} />
+              <TrackAdminActions track={track} refresh={refresh} />
+            </span>
           </div>
         );
       })}
