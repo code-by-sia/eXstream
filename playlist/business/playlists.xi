@@ -1,9 +1,28 @@
-// Barrel for the playlist business layer. Imports each local file exactly
-// once, in dependency order — Xi gathers imports by literal path, so a shared
-// file pulled in from several siblings would be compiled twice. Sibling files
-// therefore reference these types/functions globally without re-importing.
+// Wiring barrel for the playlist service. Imports every local file once in
+// dependency order: shared common interfaces/impls, the SQLite bindings, then
+// this service's records, interfaces, implementations, and HTTP layer. Later
+// files reference earlier types/classes globally without re-importing them.
+import "../../common/config/app-config.xi"
+import "../../common/security/auth-context.xi"
+import "../../common/security/auth-identity.xi"
+import "../../common/security/impl/http-auth-identity.xi"
+import "../../common/util/json-text.xi"
+import "../../common/util/impl/json-text-encoder.xi"
+import "../../common/util/sql-text.xi"
+import "../../common/util/impl/sql-text-escaper.xi"
+import "../../common/util/database-paths.xi"
+import "../../common/util/impl/file-database-paths.xi"
+import "../../vendor/sqlite.xi"
 import "playlist-records.xi"
-import "playlist-paths.xi"
 import "playlist-repository.xi"
-import "playlist-json.xi"
-import "sqlite-playlist-repository.xi"
+import "playlist-paths.xi"
+import "playlist-presenter.xi"
+import "playlist-access.xi"
+import "data-seeder.xi"
+import "impl/sqlite-playlist-repository.xi"
+import "impl/request-playlist-paths.xi"
+import "impl/json-playlist-presenter.xi"
+import "impl/owner-playlist-access.xi"
+import "impl/playlist-data-seeder.xi"
+import "../api/playlist-types.xi"
+import "../api/playlist-api.xi"

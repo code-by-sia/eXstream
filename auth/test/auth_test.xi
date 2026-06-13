@@ -1,25 +1,25 @@
-import "../security-jwt.xi"
-import "../../common/security/auth-identity.xi"
+import "../business/auth.xi"
+import "std/config.xi"
 
-test "issues and verifies a user token" {
-    let token = issueToken("test", "USER")
-    let ctx = verifyToken(token)
+test "issues and verifies a user token" (tokens: TokenService) {
+    let token = tokens.issue("test", "USER")
+    let ctx = tokens.verify(token)
 
     assert ctx.ok
     assert ctx.username == "test"
     assert ctx.role == "USER"
 }
 
-test "rejects a tampered token" {
-    let token = issueToken("test", "USER") + "broken"
-    let ctx = verifyToken(token)
-
+test "rejects a tampered token" (tokens: TokenService) {
+    let ctx = tokens.verify(tokens.issue("test", "USER") + "broken")
     assert not ctx.ok
 }
 
-test "normalizes unknown roles to user" {
-    assert cleanRole("ADMIN") == "ADMIN"
-    assert cleanRole("anything") == "USER"
+test "normalizes unknown roles to user" (identity: AuthIdentity) {
+    assert identity.cleanRole("ADMIN") == "ADMIN"
+    assert identity.cleanRole("anything") == "USER"
 }
 
-module App {}
+module App {
+    bind AppConfig -> readConfig("common/config.yaml")
+}

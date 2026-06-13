@@ -1,5 +1,5 @@
-import "api/playlist-api.xi"
-import "business/playlist-seeder.xi"
+import "business/playlists.xi"
+import "std/config.xi"
 import "std/convert.xi"
 import "std/web.xi"
 
@@ -7,11 +7,13 @@ module App {
     id = "playlist-service"
     name = "eXstream Playlist Service"
     version = "0.1.0"
-    includes = ["./playlist-service.xi", "../common/**"]
+    includes = ["./playlist-service.xi"]
     excludes = ["./test/**"]
 
-    async entry (dataSeeder:DataSeeder) main(args: String[]) -> Integer {
-        let port = 5001
+    bind AppConfig -> readConfig("common/config.yaml")
+
+    async entry (dataSeeder: DataSeeder, config: AppConfig) main(args: String[]) -> Integer {
+        let port = config.playlistPort()
         if args.len >= 2 {
             let parsed = convert.parseInteger(args.data[1])
             if isOk(parsed) { port = parsed.value }

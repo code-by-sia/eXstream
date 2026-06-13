@@ -1,11 +1,9 @@
 import "std/crypto.xi"
 import "std/text.xi"
 import "std/web.xi"
-import "auth-types.xi"
-import "../security-jwt.xi"
 
 class AuthApi implements WebRequestHandler {
-    deps { users: UserRepository }
+    deps { users: UserRepository, tokens: TokenService, identity: AuthIdentity }
 
     mapper getBaseUrl() -> String => "/auth"
 
@@ -31,7 +29,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(500, "failed to save user")
             return
         }
-        res.send(authResponse(issueToken(body.username, role), body.username, role, body.profileName, body.email, body.avatar))
+        res.send(authResponse(tokens.issue(body.username, role), body.username, role, body.profileName, body.email, body.avatar))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/login" and req.method == "POST" {
@@ -41,7 +39,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(401, "invalid username or password")
             return
         }
-        res.send(authResponse(issueToken(user.username, user.role), user.username, user.role, user.profileName, user.email, user.avatar))
+        res.send(authResponse(tokens.issue(user.username, user.role), user.username, user.role, user.profileName, user.email, user.avatar))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/reset-password" and req.method == "POST" {
@@ -60,7 +58,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/verify" and req.method == "GET" {
-        let ctx = verifyToken(bearerToken(req.header("Authorization")))
+        let ctx = tokens.verify(identity.bearerToken(req.header("Authorization")))
         if not ctx.ok {
             res.sendStatus(401, "invalid token")
             return
@@ -70,7 +68,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/profile" and req.method == "GET" {
-        let ctx = protectedContext(req)
+        let ctx = identity.context(req)
         if not ctx.ok {
             res.sendStatus(403, "missing identity headers")
             return
@@ -82,15 +80,15 @@ class AuthApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
-}
 
-mapper authResponse(token: String, username: String, role: String, profileName: String, email: String, avatar: String) -> AuthResponse {
-    return AuthResponse { token: token, username: username, role: role, profileName: profileName, email: email, avatar: avatar }
-}
-
-mapper profileResponse(username: String, role: String, user: UserRecord) -> ProfileResponse {
-    if user.found {
-        return ProfileResponse { username: user.username, role: role, profileName: user.profileName, email: user.email, avatar: user.avatar }
+    mapper authResponse(token: String, username: String, role: String, profileName: String, email: String, avatar: String) -> AuthResponse {
+        return AuthResponse { token: token, username: username, role: role, profileName: profileName, email: email, avatar: avatar }
     }
-    return ProfileResponse { username: username, role: role, profileName: username, email: "", avatar: "" }
+
+    mapper profileResponse(username: String, role: String, user: UserRecord) -> ProfileResponse {
+        if user.found {
+            return ProfileResponse { username: user.username, role: role, profileName: user.profileName, email: user.email, avatar: user.avatar }
+        }
+        return ProfileResponse { username: username, role: role, profileName: username, email: "", avatar: "" }
+    }
 }

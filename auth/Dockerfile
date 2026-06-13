@@ -32,6 +32,7 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY --from=build /workspace/build/auth-service /app/auth-service
+COPY --from=build /workspace/common/config.yaml /app/common/config.yaml
 
 EXPOSE 4001
 VOLUME ["/app/data"]

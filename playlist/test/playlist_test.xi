@@ -1,25 +1,27 @@
 import "../business/playlists.xi"
+import "std/config.xi"
+import "std/text.xi"
 
-test "guards playlist identifiers" {
-    assert safeId("abc123")
-    assert not safeId("")
-    assert not safeId("../abc")
-    assert not safeId("abc/def")
+test "guards playlist identifiers" (paths: PlaylistPaths) {
+    assert paths.isSafeId("abc123")
+    assert not paths.isSafeId("")
+    assert not paths.isSafeId("../abc")
+    assert not paths.isSafeId("abc/def")
 }
 
-test "checks playlist access" {
+test "checks playlist access" (access: PlaylistAccess) {
     let playlist = Playlist { found: true, id: "pl1", name: "Favorites", description: "Daily", owner: "sia", tracks: empty List<Track> }
 
-    assert canAccessPlaylist(playlist, "sia", "USER")
-    assert canAccessPlaylist(playlist, "anyone", "ADMIN")
-    assert not canAccessPlaylist(playlist, "other", "USER")
+    assert access.canAccess(playlist, "sia", "USER")
+    assert access.canAccess(playlist, "anyone", "ADMIN")
+    assert not access.canAccess(playlist, "other", "USER")
 }
 
-test "serializes playlists with tracks" {
+test "serializes playlists with tracks" (presenter: PlaylistPresenter) {
     let tracks = empty List<Track>
     tracks.push(Track { id: "track1", title: "Song", artist: "Artist", url: "http://audio", addedBy: "sia", coverUrl: "data:image/png;base64,abc" })
     let playlist = Playlist { found: true, id: "pl1", name: "Favorites", description: "Daily", owner: "sia", tracks: tracks }
-    let rendered = playlistJson(playlist)
+    let rendered = presenter.playlist(playlist)
 
     assert text.contains(rendered, "\"name\":\"Favorites\"")
     assert text.contains(rendered, "\"title\":\"Song\"")
@@ -46,4 +48,6 @@ test "creates, updates, and deletes tracks through the repository" (repo: Playli
     assert not repo.get(id).found
 }
 
-module App {}
+module App {
+    bind AppConfig -> readConfig("common/config.yaml")
+}

@@ -1,11 +1,5 @@
-interface DataSeeder {
-    action seedDefaultUsers()
-}
-
 class UserDataSeeder implements DataSeeder {
-    deps {
-        users:UserRepository
-    }
+    deps { users: UserRepository }
 
     action seedDefaultUsers() {
         let admin = users.find("admin")

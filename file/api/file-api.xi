@@ -1,14 +1,9 @@
 import "std/crypto.xi"
 import "std/text.xi"
 import "std/web.xi"
-import "file-types.xi"
-import "../business/file-paths.xi"
-import "../business/file-repository.xi"
-import "../../common/security/auth-identity.xi"
-import "../../common/util/json-string.xi"
 
 class FileApi implements WebRequestHandler {
-    deps { files: FileRepository }
+    deps { files: FileRepository, identity: AuthIdentity, json: JsonText, paths: FilePaths }
 
     mapper getBaseUrl() -> String => "/"
 
@@ -17,26 +12,26 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         res.sendText(200, fileListJson(files.list()))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         let filePath = "music/" + newUuid()
         let result = files.create(filePath, req.body)
         if result == "created" {
-            res.sendText(200, "{\"ok\":true,\"path\":" + jsonString(filePath) + ",\"url\":" + jsonString("/file/" + filePath) + "}")
+            res.sendText(200, "{\"ok\":true,\"path\":" + json.encode(filePath) + ",\"url\":" + json.encode("/file/" + filePath) + "}")
             return
         }
         res.sendStatus(500, "failed to upload file")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "GET" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
-        let filePath = requestFilePath(req)
-        if not safePath(filePath) {
+        let filePath = paths.fromRequest(req)
+        if not paths.isSafe(filePath) {
             res.sendStatus(400, "file path must be a safe relative path")
             return
         }
@@ -50,59 +45,59 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "POST" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let body = req.parse(FileWrite)
-        let result = files.create(requestFilePath(req), body.content)
+        let result = files.create(paths.fromRequest(req), body.content)
         sendWriteResult(res, result, "create")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "PUT" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let body = req.parse(FileWrite)
-        let result = files.update(requestFilePath(req), body.content)
+        let result = files.update(paths.fromRequest(req), body.content)
         sendWriteResult(res, result, "update")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "DELETE" {
-        if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
-        let result = files.delete(requestFilePath(req))
+        let result = files.delete(paths.fromRequest(req))
         sendWriteResult(res, result, "delete")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
-}
 
-mapper newUuid() -> String {
-    return crypto.randomHex(4) + "-"
-        + crypto.randomHex(2) + "-"
-        + crypto.randomHex(2) + "-"
-        + crypto.randomHex(2) + "-"
-        + crypto.randomHex(6)
-}
-
-mapper fileListJson(paths: List<String>) -> String {
-    let out = "{\"files\":["
-    let first = true
-    for p in paths {
-        if not first { out = out + "," }
-        first = false
-        out = out + jsonString(p)
+    mapper newUuid() -> String {
+        return crypto.randomHex(4) + "-"
+            + crypto.randomHex(2) + "-"
+            + crypto.randomHex(2) + "-"
+            + crypto.randomHex(2) + "-"
+            + crypto.randomHex(6)
     }
-    return out + "]}"
-}
 
-consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {
-    if result == "created" or result == "updated" or result == "deleted" {
-        res.send(FileMessage { ok: true, message: result })
-        return
+    mapper fileListJson(filePaths: List<String>) -> String {
+        let out = "{\"files\":["
+        let first = true
+        for p in filePaths {
+            if not first { out = out + "," }
+            first = false
+            out = out + json.encode(p)
+        }
+        return out + "]}"
     }
-    if result == "already-exists" { res.sendStatus(409, "file already exists") return }
-    if result == "not-found" { res.sendStatus(404, "file not found") return }
-    if result == "invalid-path" { res.sendStatus(400, "file path must be a safe relative path") return }
-    res.sendStatus(500, "failed to " + operation + " file")
+
+    consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {
+        if result == "created" or result == "updated" or result == "deleted" {
+            res.send(FileMessage { ok: true, message: result })
+            return
+        }
+        if result == "already-exists" { res.sendStatus(409, "file already exists") return }
+        if result == "not-found" { res.sendStatus(404, "file not found") return }
+        if result == "invalid-path" { res.sendStatus(400, "file path must be a safe relative path") return }
+        res.sendStatus(500, "failed to " + operation + " file")
+    }
 }

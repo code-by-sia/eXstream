@@ -1,8 +1,7 @@
-import "../business/file-repository.xi"
-import "../business/sqlite-file-repository.xi"
+import "../business/files.xi"
+import "std/config.xi"
 
-test "creates and reads stored files" {
-    let repo = App.resolve(FileRepository)
+test "creates and reads stored files" (repo: FileRepository) {
     let filePath = "test/codex-repository.txt"
 
     repo.delete(filePath)
@@ -18,4 +17,6 @@ test "creates and reads stored files" {
     assert not repo.get(filePath).found
 }
 
-module App {}
+module App {
+    bind AppConfig -> readConfig("common/config.yaml")
+}

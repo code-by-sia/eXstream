@@ -49,11 +49,16 @@ Public routes (`/auth/register`, `/auth/login`, `/auth/reset-password`, `/auth/v
 - `playlist`: Xi service for playlist CRUD and music search. Default port: `5001`.
 - `file`: Xi file service for create, read, update, delete, and list. Default port: `6001`.
 - `web`: React JavaScript music player UI with Tailwind, shadcn-style UI primitives, and Zustand. Default port: `7001`.
-- `vendor`: vendored [xi-sqlite](https://github.com/code-by-sia/xi-sqlite) bindings, shared by the Xi services.
+- `common`: shared Xi interfaces (config, security, util) and `config.yaml`, gathered into every service.
+- `vendor`: vendored [xi-sqlite](https://github.com/code-by-sia/xi-sqlite) bindings, used by the `auth` and `playlist` services.
+
+### Configuration
+
+All services share [`common/config.yaml`](common/config.yaml) — ports and storage paths — read at runtime through the typed `AppConfig` interface (`std/config`). Each service binds it with `bind AppConfig -> readConfig("common/config.yaml")` in its `module App`; a port can still be overridden by a command-line argument.
 
 ### Storage & layering
 
-Each Xi service persists to its own SQLite database under `/app/data` (`auth.db`, `playlists.db`, `files.db`) via the vendored `sqlite.SQLite` bindings. The services follow a layered, dependency-injected design: an HTTP handler depends only on a repository **interface** (`UserRepository`, `FileRepository`, `PlaylistRepository`); the SQLite-backed implementor is injected by the compiler and can be swapped by binding another in `module App`. All SQL is confined to the repository implementations, and JSON is rendered by separate presenter mappers.
+The `auth` and `playlist` services persist to SQLite (`auth.db`, `playlists.db` under the configured `dataDir`) via the vendored `sqlite.SQLite` bindings; the `file` service stores uploads as real files under `fileStorageDir`. Every service follows the same layered, dependency-injected design: behaviour lives in classes behind small interfaces, with the **interfaces in `business/`** and their **implementations in `business/impl/`**. HTTP handlers, repositories, JWT handling, JSON presenters, path parsing, and access checks are all injected implementations — there are no loose top-level functions (only `entry main` and plain `type` declarations sit outside a class). Swap any piece by binding a different implementor in `module App`.
 
 ## API Specs
 

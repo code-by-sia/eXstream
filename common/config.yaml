@@ -1,0 +1,7 @@
+# Shared configuration for every eXstream Xi service. Read at runtime relative
+# to the process working directory (the repo root locally, /app in Docker).
+authPort: 4001
+playlistPort: 5001
+filePort: 6001
+dataDir: data
+fileStorageDir: data/files
