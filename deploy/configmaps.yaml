@@ -1,0 +1,27 @@
+# nginx config for the web pods.
+#
+# It replaces web/nginx.conf from the image: in Kubernetes all traffic
+# enters through Traefik, which routes API paths to the services before
+# they ever reach the web pods, so the SPA pods only serve static files
+# (with the history-API fallback for client-side routes).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-nginx
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: web
+data:
+  default.conf: |
+    server {
+        listen 7001;
+        server_name _;
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+    }

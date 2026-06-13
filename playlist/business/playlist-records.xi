@@ -1,57 +1,15 @@
-import "std/text.xi"
+// Domain records for the playlist service. The `found` flag on Playlist is an
+// in-memory sentinel for "no such row"; it is never serialized (the presenter
+// emits only id/name/description/owner/tracks).
+type Track = { id: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String }
+type Playlist = { found: Bool, id: String, name: String, description: String, owner: String, tracks: List<Track> }
+type MusicHit = { id: String, playlistId: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String }
 
-mapper cleanField(s: String) -> String {
-    let out = text.replace(s, "|", " ")
-    out = text.replace(out, "\n", " ")
-    return text.trim(out)
+mapper missingPlaylist(id: String) -> Playlist {
+    return Playlist { found: false, id: id, name: "", description: "", owner: "", tracks: empty List<Track> }
 }
 
-mapper lineOr(lines: String[], i: Integer) -> String {
-    if i < lines.len { return lines.data[i] }
-    return ""
-}
-
-mapper ownerOf(content: String) -> String {
-    let lines = text.split(content, "\n")
-    return lineOr(lines, 2)
-}
-
-predicate canAccess(content: String, username: String, role: String) {
+predicate canAccessPlaylist(playlist: Playlist, username: String, role: String) {
     if role == "ADMIN" { return true }
-    return ownerOf(content) == username
-}
-
-mapper trackJson(parts: String[]) -> String {
-    return "{"
-        + "\"id\":" + jsonString(parts.data[0]) + ","
-        + "\"title\":" + jsonString(parts.data[1]) + ","
-        + "\"artist\":" + jsonString(parts.data[2]) + ","
-        + "\"url\":" + jsonString(parts.data[3]) + ","
-        + "\"addedBy\":" + jsonString(parts.data[4]) + ","
-        + "\"coverUrl\":" + jsonString(lineOr(parts, 5))
-        + "}"
-}
-
-mapper playlistJson(id: String, content: String) -> String {
-    let lines = text.split(content, "\n")
-    let tracks = "["
-    let first = true
-    let i = 3
-    while i < lines.len {
-        let parts = text.split(lines.data[i], "|")
-        if parts.len >= 5 {
-            if not first { tracks = tracks + "," }
-            first = false
-            tracks = tracks + trackJson(parts)
-        }
-        i = i + 1
-    }
-
-    return "{"
-        + "\"id\":" + jsonString(id) + ","
-        + "\"name\":" + jsonString(lineOr(lines, 0)) + ","
-        + "\"description\":" + jsonString(lineOr(lines, 1)) + ","
-        + "\"owner\":" + jsonString(lineOr(lines, 2)) + ","
-        + "\"tracks\":" + tracks + "]"
-        + "}"
+    return playlist.owner == username
 }

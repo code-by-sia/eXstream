@@ -1,0 +1,47 @@
+# Persistent storage for the Xi services. Each service keeps its data
+# as flat files under /app/data, so every PVC is ReadWriteOnce and the
+# matching Deployment must stay at a single replica (see deployments.yaml).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: auth-data
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: auth
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: playlist-data
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: playlist
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: file-data
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: file
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

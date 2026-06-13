@@ -16,7 +16,7 @@ module App {
             let parsed = convert.parseInteger(args.data[1])
             if isOk(parsed) { port = parsed.value }
         }
-        seedStarterPlaylists()
+        seedStarterPlaylists(App.resolve(PlaylistRepository))
         web.serve(port)
     }
 }

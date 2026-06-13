@@ -1,12 +1,11 @@
 import "std/crypto.xi"
-import "std/fs.xi"
-import "std/path.xi"
 import "std/text.xi"
 import "std/web.xi"
 import "file-types.xi"
 import "../business/file-paths.xi"
 import "../business/file-repository.xi"
 import "../../common/security/auth-identity.xi"
+import "../../common/util/json-string.xi"
 
 class FileApi implements WebRequestHandler {
     deps { files: FileRepository }
@@ -19,16 +18,15 @@ class FileApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
         if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
-        res.send(FileList { files: files.list() })
+        res.sendText(200, fileListJson(files.list()))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
         if not hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         let filePath = "music/" + newUuid()
-        let target = storagePath(filePath)
-        fs.mkdirAll(path.dirname(target))
-        if fs.writeFile(target, req.body) {
-            res.sendText(200, "{\"ok\":true,\"path\":\"" + filePath + "\",\"url\":\"/file/" + filePath + "\"}")
+        let result = files.create(filePath, req.body)
+        if result == "created" {
+            res.sendText(200, "{\"ok\":true,\"path\":" + jsonString(filePath) + ",\"url\":" + jsonString("/file/" + filePath) + "}")
             return
         }
         res.sendStatus(500, "failed to upload file")
@@ -44,7 +42,7 @@ class FileApi implements WebRequestHandler {
         }
 
         let file = files.get(filePath)
-        if text.isEmpty(file.content) and not fs.isFile(storagePath(filePath)) {
+        if not file.found {
             res.sendStatus(404, "file not found")
             return
         }
@@ -85,6 +83,17 @@ mapper newUuid() -> String {
         + crypto.randomHex(2) + "-"
         + crypto.randomHex(2) + "-"
         + crypto.randomHex(6)
+}
+
+mapper fileListJson(paths: List<String>) -> String {
+    let out = "{\"files\":["
+    let first = true
+    for p in paths {
+        if not first { out = out + "," }
+        first = false
+        out = out + jsonString(p)
+    }
+    return out + "]}"
 }
 
 consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {

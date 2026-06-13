@@ -1,16 +1,4 @@
-import "std/fs.xi"
-import "std/path.xi"
 import "std/text.xi"
-
-producer playlistRoot() -> String {
-    let d = path.join(fs.cwd(), "data/playlists")
-    fs.mkdirAll(d)
-    return d
-}
-
-mapper playlistPath(id: String) -> String {
-    return path.join(path.join(fs.cwd(), "data/playlists"), id + ".txt")
-}
 
 mapper idFromPlaylistPath(reqPath: String) -> String {
     let rest = text.substring(reqPath, 11, text.length(reqPath))

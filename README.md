@@ -5,6 +5,43 @@ eXstream is a streaming web app with separate services for ingress, auth, file s
 <img width="1312" height="983" alt="eXstream" src="https://github.com/user-attachments/assets/ca8c5201-9125-4150-8e04-57c09c6f1ac6" />
 
 
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser(("Browser / PWA"))
+
+    subgraph ingress["api · ingress"]
+        Traefik["Traefik :80"]
+        ForwardAuth["forward-auth :3000<br/>verifies bearer JWT"]
+    end
+
+    subgraph services["Xi services"]
+        Auth["auth :4001"]
+        Playlist["playlist :5001"]
+        File["file :6001"]
+    end
+
+    Web["web :7001<br/>React SPA"]
+
+    AuthData[("auth-data")]
+    PlaylistData[("playlist-data")]
+    FileData[("file-data")]
+
+    Browser -->|"HTTP"| Traefik
+    Traefik -->|"/ (SPA)"| Web
+    Traefik -->|"/auth/*"| Auth
+    Traefik -->|"/playlists, /playlist/search, /music/search"| Playlist
+    Traefik -->|"/file, /files"| File
+    Traefik -.->|"ForwardAuth: adds X-Username / X-Role"| ForwardAuth
+
+    Auth --- AuthData
+    Playlist --- PlaylistData
+    File --- FileData
+```
+
+Public routes (`/auth/register`, `/auth/login`, `/auth/reset-password`, `/auth/verify`, and the SPA) skip the auth middleware; every other API route passes through `forward-auth`, which validates the bearer JWT and forwards the caller identity to the services as `X-Username` and `X-Role` headers. The `auth` and `forward-auth` services share the same `JWT_SECRET`.
+
 ## Modules
 
 - `api`: Traefik ingress and reverse proxy. Protected routes use a ForwardAuth helper that verifies the bearer JWT and forwards `X-Username` and `X-Role`.
@@ -12,6 +49,11 @@ eXstream is a streaming web app with separate services for ingress, auth, file s
 - `playlist`: Xi service for playlist CRUD and music search. Default port: `5001`.
 - `file`: Xi file service for create, read, update, delete, and list. Default port: `6001`.
 - `web`: React JavaScript music player UI with Tailwind, shadcn-style UI primitives, and Zustand. Default port: `7001`.
+- `vendor`: vendored [xi-sqlite](https://github.com/code-by-sia/xi-sqlite) bindings, shared by the Xi services.
+
+### Storage & layering
+
+Each Xi service persists to its own SQLite database under `/app/data` (`auth.db`, `playlists.db`, `files.db`) via the vendored `sqlite.SQLite` bindings. The services follow a layered, dependency-injected design: an HTTP handler depends only on a repository **interface** (`UserRepository`, `FileRepository`, `PlaylistRepository`); the SQLite-backed implementor is injected by the compiler and can be swapped by binding another in `module App`. All SQL is confined to the repository implementations, and JSON is rendered by separate presenter mappers.
 
 ## API Specs
 
@@ -60,6 +102,10 @@ The playlist service seeds initial royalty-free generated music for the `test` u
 | Ambient Loops | Slow Orbit, Clean Room, Open Sky |
 
 Seeded tracks use compact `tone:` URLs that the web player turns into generated WAV audio at playback time.
+
+## Deploy on Kubernetes
+
+The [`deploy/`](deploy) folder ships the full stack as Kubernetes objects — Deployments, Services, HPAs, PersistentVolumeClaims, a Traefik `IngressRoute` with the ForwardAuth `Middleware`, plus the Secret and ConfigMap they rely on. See [`deploy/README.md`](deploy/README.md) for the step-by-step guide.
 
 ## Build Xi Services Locally
 

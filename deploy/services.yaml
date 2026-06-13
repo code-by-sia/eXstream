@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: auth
+spec:
+  selector:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: auth
+  ports:
+    - name: http
+      port: 4001
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: playlist
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: playlist
+spec:
+  selector:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: playlist
+  ports:
+    - name: http
+      port: 5001
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: file
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: file
+spec:
+  selector:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: file
+  ports:
+    - name: http
+      port: 6001
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: forward-auth
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: forward-auth
+spec:
+  selector:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: forward-auth
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: web
+spec:
+  selector:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: web
+  ports:
+    - name: http
+      port: 7001
+      targetPort: http

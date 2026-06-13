@@ -1,10 +1,5 @@
 import "../business/playlists.xi"
 
-test "cleans fields for line storage" {
-    assert cleanField(" chill | mix ") == "chill   mix"
-    assert cleanField("line\nbreak") == "line break"
-}
-
 test "guards playlist identifiers" {
     assert safeId("abc123")
     assert not safeId("")
@@ -13,35 +8,42 @@ test "guards playlist identifiers" {
 }
 
 test "checks playlist access" {
-    let content = "Favorites\nDaily\nsia"
+    let playlist = Playlist { found: true, id: "pl1", name: "Favorites", description: "Daily", owner: "sia", tracks: empty List<Track> }
 
-    assert canAccess(content, "sia", "USER")
-    assert canAccess(content, "anyone", "ADMIN")
-    assert not canAccess(content, "other", "USER")
+    assert canAccessPlaylist(playlist, "sia", "USER")
+    assert canAccessPlaylist(playlist, "anyone", "ADMIN")
+    assert not canAccessPlaylist(playlist, "other", "USER")
 }
 
 test "serializes playlists with tracks" {
-    let content = "Favorites\nDaily\nsia\ntrack1|Song|Artist|http://audio|sia|data:image/png;base64,abc"
-    let rendered = playlistJson("pl1", content)
+    let tracks = empty List<Track>
+    tracks.push(Track { id: "track1", title: "Song", artist: "Artist", url: "http://audio", addedBy: "sia", coverUrl: "data:image/png;base64,abc" })
+    let playlist = Playlist { found: true, id: "pl1", name: "Favorites", description: "Daily", owner: "sia", tracks: tracks }
+    let rendered = playlistJson(playlist)
 
     assert text.contains(rendered, "\"name\":\"Favorites\"")
     assert text.contains(rendered, "\"title\":\"Song\"")
     assert text.contains(rendered, "\"coverUrl\":\"data:image/png;base64,abc\"")
 }
 
-test "updates and deletes playlist tracks" {
-    let id = createPlaylist("Manage", "Admin tools", "admin")
-    let trackId = addTrack(id, "Old title", "Old artist", "/file/old", "admin", "cover-old")
+test "creates, updates, and deletes tracks through the repository" (repo: PlaylistRepository) {
+    let id = repo.create("Manage", "Admin tools", "admin")
+    assert id != ""
 
-    assert updateTrack(id, trackId, "New title", "New artist", "/file/new", "cover-new") == "updated"
-    let updated = playlistJson(id, readPlaylist(id))
-    assert text.contains(updated, "\"title\":\"New title\"")
-    assert text.contains(updated, "\"url\":\"/file/new\"")
-    assert text.contains(updated, "\"coverUrl\":\"cover-new\"")
+    let trackId = repo.addTrack(id, "Old title", "Old artist", "/file/old", "admin", "cover-old")
+    assert trackId != ""
 
-    assert deleteTrack(id, trackId) == "deleted"
-    assert not text.contains(readPlaylist(id), "New title")
-    deletePlaylist(id)
+    assert repo.updateTrack(id, trackId, "New title", "New artist", "/file/new", "cover-new") == "updated"
+    let updated = repo.get(id)
+    assert updated.found
+    assert updated.tracks.get(0).title == "New title"
+    assert updated.tracks.get(0).url == "/file/new"
+
+    assert repo.deleteTrack(id, trackId) == "deleted"
+    assert repo.get(id).tracks.isEmpty()
+
+    assert repo.remove(id)
+    assert not repo.get(id).found
 }
 
 module App {}

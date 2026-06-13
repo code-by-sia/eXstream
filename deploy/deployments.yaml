@@ -1,0 +1,274 @@
+# Image names assume a registry prefix you control; build and push them
+# first (see deploy/README.md) or substitute your own references.
+#
+# auth, playlist, and file are pinned to 1 replica because they persist
+# data on ReadWriteOnce volumes. web and forward-auth are stateless and
+# scale horizontally via the HPAs in hpa.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: auth
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exstream
+      app.kubernetes.io/component: auth
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exstream
+        app.kubernetes.io/component: auth
+    spec:
+      containers:
+        - name: auth
+          image: ghcr.io/code-by-sia/exstream-auth:latest
+          ports:
+            - name: http
+              containerPort: 4001
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: exstream-jwt
+                  key: JWT_SECRET
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: auth-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: playlist
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: playlist
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exstream
+      app.kubernetes.io/component: playlist
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exstream
+        app.kubernetes.io/component: playlist
+    spec:
+      containers:
+        - name: playlist
+          image: ghcr.io/code-by-sia/exstream-playlist:latest
+          ports:
+            - name: http
+              containerPort: 5001
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: playlist-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: file
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: file
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exstream
+      app.kubernetes.io/component: file
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exstream
+        app.kubernetes.io/component: file
+    spec:
+      containers:
+        - name: file
+          image: ghcr.io/code-by-sia/exstream-file:latest
+          ports:
+            - name: http
+              containerPort: 6001
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: file-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forward-auth
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: forward-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exstream
+      app.kubernetes.io/component: forward-auth
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exstream
+        app.kubernetes.io/component: forward-auth
+    spec:
+      containers:
+        - name: forward-auth
+          image: ghcr.io/code-by-sia/exstream-forward-auth:latest
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: exstream-jwt
+                  key: JWT_SECRET
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+    app.kubernetes.io/component: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: exstream
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: exstream
+        app.kubernetes.io/component: web
+    spec:
+      containers:
+        - name: web
+          image: ghcr.io/code-by-sia/exstream-web:latest
+          ports:
+            - name: http
+              containerPort: 7001
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: web-nginx
