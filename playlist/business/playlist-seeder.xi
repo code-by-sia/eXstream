@@ -1,26 +1,29 @@
 type SeedTrack = { title: String, artist: String, url: String }
 
-// Seeds the demo library once, through the repository (no direct storage
-// access). Idempotent: skips if the seed user already has playlists.
-consumer seedStarterPlaylists(repo: PlaylistRepository) {
-    if not repo.listForUser("test", "USER").isEmpty() { return }
 
-    seedPlaylist(repo, "Starter Favorites", "Royalty-free generated music for eXstream", listOf(
-        SeedTrack { title: "Midnight Pulse", artist: "eXstream Studio", url: "tone:220,277,330,415" },
-        SeedTrack { title: "Glass Harbor", artist: "eXstream Studio", url: "tone:330,392,494,587" },
-        SeedTrack { title: "Solar Steps", artist: "eXstream Studio", url: "tone:262,330,392,523" }
-    ))
-    seedPlaylist(repo, "Ambient Loops", "Soft generated loops for testing playback", listOf(
-        SeedTrack { title: "Slow Orbit", artist: "eXstream Studio", url: "tone:196,247,294,349" },
-        SeedTrack { title: "Clean Room", artist: "eXstream Studio", url: "tone:294,370,440,554" },
-        SeedTrack { title: "Open Sky", artist: "eXstream Studio", url: "tone:247,311,370,494" }
-    ))
+interface DataSeeder {
+    action seedPlaylists()
 }
 
-consumer seedPlaylist(repo: PlaylistRepository, name: String, description: String, tracks: List<SeedTrack>) {
-    let id = repo.create(name, description, "test")
-    if id == "" { return }
-    for track in tracks {
-        repo.addTrack(id, track.title, track.artist, track.url, "system", "")
+// Seeds the demo library once, through the repository (no direct storage
+// access). Idempotent: skips if the seed user already has playlists.
+class PlaylistDataSeeder implements DataSeeder {
+    deps {
+        repo:PlaylistRepository
     }
+
+    action seedPlaylists(){
+        if not repo.listForUser("test", "USER").isEmpty() { return }
+
+        let favId = repo.create("Starter Favorites", "Royalty-free generated music for eXstream","test")
+        repo.addTrack(favId,"Midnight Pulse","eXstream Studio","tone:220,277,330,415","system","")
+        repo.addTrack(favId,"Glass Harbor","eXstream Studio","tone:330,392,494,587","system","")
+        repo.addTrack(favId,"Solar Steps","eXstream Studio","tone:262,330,392,523","system","")
+
+        let ambientId = repo.create("Ambient Loops", "Soft generated loops for testing playback","test")
+        repo.addTrack(ambientId, "Slow Orbit", "eXstream Studio","tone:196,247,294,349","system","")
+        repo.addTrack(ambientId, "Clean Room", "eXstream Studio","tone:294,370,440,554","system","")
+        repo.addTrack(ambientId, "Open Sky", "eXstream Studio","tone:247,311,370,494","system","")
+    }
+
 }

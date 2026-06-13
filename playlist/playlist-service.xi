@@ -10,13 +10,14 @@ module App {
     includes = ["./playlist-service.xi", "../common/**"]
     excludes = ["./test/**"]
 
-    async entry main(args: String[]) -> Integer {
+    async entry (dataSeeder:DataSeeder) main(args: String[]) -> Integer {
         let port = 5001
         if args.len >= 2 {
             let parsed = convert.parseInteger(args.data[1])
             if isOk(parsed) { port = parsed.value }
         }
-        seedStarterPlaylists(App.resolve(PlaylistRepository))
+
+        dataSeeder.seedPlaylists()
         web.serve(port)
     }
 }
