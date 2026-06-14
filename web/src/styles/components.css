@@ -781,6 +781,34 @@
         @apply grid gap-2 rounded-lg border border-border bg-background p-3;
     }
 
+    .admin-art-edit {
+        @apply flex items-center gap-3;
+    }
+
+    .admin-art-preview {
+        @apply size-16 shrink-0 shadow-md;
+    }
+
+    .admin-art-controls {
+        @apply grid gap-1.5;
+    }
+
+    .admin-art-upload {
+        @apply inline-flex w-fit cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold transition;
+    }
+
+    .admin-art-upload:hover {
+        @apply bg-accent;
+    }
+
+    .admin-art-input {
+        @apply hidden;
+    }
+
+    .admin-art-remove {
+        @apply w-fit cursor-pointer text-xs text-muted underline-offset-2 hover:underline;
+    }
+
     .upload-status {
         @apply mt-4 grid gap-2 rounded-lg border border-border bg-background p-3 text-sm;
     }
