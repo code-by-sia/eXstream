@@ -154,7 +154,7 @@ Useful web routes:
 - `/playlists/:id`: Deep link to a playlist.
 - `/search?q=term`: Deep link to music search results.
 
-Admins manage music inline: an "Add music" button in the page hero uploads tracks, and track rows show edit/delete actions.
+Admins manage music inline: an "Add music" button in the page hero batch-uploads MP3s (reading title, artist, and embedded album art from each file), and track rows show edit/delete actions. Any user can add a song to multiple playlists or move it between them from a track row's "Add to playlist" action. Album art is extracted on upload and cached in the file service; tracks without embedded art fall back to a deterministic generated cover.
 
 The web app supports dark mode, mobile-friendly layouts, and PWA installation via its web manifest and service worker.
 Admin music management uploads audio through the file service, then stores the uploaded file path on playlist tracks.
@@ -167,6 +167,7 @@ Run Xi unit tests:
 xi test auth/test/auth_test.xi
 xi test playlist/test/playlist_test.xi
 xi test file/test/file_test.xi
+xi test file/test/file_repository_test.xi
 ```
 
 Run JavaScript tests:

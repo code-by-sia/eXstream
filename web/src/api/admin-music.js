@@ -14,10 +14,14 @@ export function addTrackToPlaylist(token, playlistId, track) {
   });
 }
 
-// Adds the track to the target playlist, then removes it from its current one.
-export async function moveTrackToPlaylist(token, targetPlaylistId, track) {
-  await addTrackToPlaylist(token, targetPlaylistId, track);
-  await deleteLibrarySong(token, track);
+// Atomically moves the track to the target playlist (single backend call;
+// the track keeps its id and is never duplicated).
+export function moveTrackToPlaylist(token, targetPlaylistId, track) {
+  return request(`/playlists/${track.playlistId}/tracks/${track.id}/move`, {
+    token,
+    method: "POST",
+    body: JSON.stringify({ targetPlaylistId }),
+  });
 }
 
 export function updateLibrarySong(token, track) {

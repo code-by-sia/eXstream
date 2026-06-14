@@ -113,6 +113,32 @@ paths:
                 $ref: "#/components/schemas/Playlist"
         "404":
           description: Track not found
+  /playlists/{id}/tracks/{trackId}/move:
+    post:
+      summary: Atomically move a track to another playlist.
+      parameters:
+        - $ref: "#/components/parameters/PlaylistId"
+        - $ref: "#/components/parameters/TrackId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetPlaylistId:
+                  type: string
+      responses:
+        "200":
+          description: Target playlist with the moved track
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Playlist"
+        "403":
+          description: Source or target playlist access denied
+        "404":
+          description: Playlist, track, or target not found
   /playlist/search:
     get:
       summary: Search playlists.

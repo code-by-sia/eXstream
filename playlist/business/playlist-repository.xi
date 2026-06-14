@@ -12,4 +12,5 @@ interface PlaylistRepository {
     producer addTrack(id: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String) -> String
     producer updateTrack(id: String, trackId: String, title: String, artist: String, url: String, coverUrl: String) -> String
     producer deleteTrack(id: String, trackId: String) -> String
+    producer moveTrack(id: String, trackId: String, targetId: String) -> String
 }

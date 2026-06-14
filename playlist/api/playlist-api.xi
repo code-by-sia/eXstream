@@ -64,6 +64,25 @@ class PlaylistApi implements WebRequestHandler {
         sendTrackWriteResult(res, playlist.id, result)
     }
 
+    action handle(req: HttpRequest, res: HttpResponse) where text.contains(req.path, "/tracks/") and text.endsWith(req.path, "/move") and req.method == "POST" {
+        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+
+        let source = playlists.get(paths.playlistId(req.path))
+        if not source.found { res.sendStatus(404, "playlist not found") return }
+        if not access.canAccess(source, req.header("X-Username"), identity.roleOf(req)) { res.sendStatus(403, "playlist access denied") return }
+
+        let trackId = paths.trackId(req.path)
+        if not paths.isSafeId(trackId) { res.sendStatus(400, "invalid track id") return }
+
+        let body = req.parse(TrackMove)
+        let target = playlists.get(body.targetPlaylistId)
+        if not target.found { res.sendStatus(404, "target playlist not found") return }
+        if not access.canAccess(target, req.header("X-Username"), identity.roleOf(req)) { res.sendStatus(403, "target playlist access denied") return }
+
+        let result = playlists.moveTrack(source.id, trackId, target.id)
+        sendTrackWriteResult(res, target.id, result)
+    }
+
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and text.contains(req.path, "/tracks/") and req.method == "DELETE" {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
@@ -112,7 +131,7 @@ class PlaylistApi implements WebRequestHandler {
     }
 
     consumer sendTrackWriteResult(res: HttpResponse, id: String, result: String) {
-        if result == "updated" or result == "deleted" {
+        if result == "updated" or result == "deleted" or result == "moved" {
             res.sendText(200, presenter.playlist(playlists.get(id)))
             return
         }

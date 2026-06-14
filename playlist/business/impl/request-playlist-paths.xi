@@ -13,7 +13,10 @@ class RequestPlaylistPaths implements PlaylistPaths {
     mapper trackId(reqPath: String) -> String {
         let prefix = "/playlists/" + playlistId(reqPath) + "/tracks/"
         if not text.startsWith(reqPath, prefix) { return "" }
-        return text.substring(reqPath, text.length(prefix), text.length(reqPath))
+        let rest = text.substring(reqPath, text.length(prefix), text.length(reqPath))
+        let slash = text.indexOf(rest, "/")
+        if slash >= 0 { return text.substring(rest, 0, slash) }
+        return rest
     }
 
     predicate isSafeId(id: String) {

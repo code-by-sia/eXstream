@@ -100,6 +100,21 @@ http
       }
       if (req.method === "DELETE") { files.delete(path); return json(res, { ok: true, message: "deleted" }); }
     }
+    const moveMatch = url.pathname.match(/^\/playlists\/([^/]+)\/tracks\/([^/]+)\/move$/);
+    if (moveMatch && req.method === "POST") {
+      const source = playlists.find((p) => p.id === moveMatch[1]);
+      if (!source) return json(res, { error: "not found" }, 404);
+      readBody(req).then((body) => {
+        const target = playlists.find((p) => p.id === (JSON.parse(body || "{}").targetPlaylistId));
+        if (!target) return json(res, { error: "target not found" }, 404);
+        const index = source.tracks.findIndex((t) => t.id === moveMatch[2]);
+        if (index < 0) return json(res, { error: "track not found" }, 404);
+        const [track] = source.tracks.splice(index, 1);
+        target.tracks.push(track);
+        json(res, target);
+      });
+      return;
+    }
     const trackMatch = url.pathname.match(/^\/playlists\/([^/]+)\/tracks(?:\/([^/]+))?$/);
     if (trackMatch) {
       const playlist = playlists.find((p) => p.id === trackMatch[1]);

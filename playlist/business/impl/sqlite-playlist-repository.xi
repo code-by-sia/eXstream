@@ -123,6 +123,25 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         return "deleted"
     }
 
+    // Moves a track to another playlist atomically: a single UPDATE reassigns
+    // the row and appends it to the end of the target's order. The track keeps
+    // its id, so there is no add-then-delete duplication window.
+    producer moveTrack(id: String, trackId: String, targetId: String) -> String {
+        let opened = connect()
+        if isErr(opened) { return "storage-failed" }
+        let db = opened.value
+
+        let written = sql.exec(db, "update tracks set "
+            + "playlist_id = '" + sqlText.escape(targetId) + "', "
+            + "position = (select count(*) from tracks where playlist_id = '" + sqlText.escape(targetId) + "') "
+            + "where id = '" + sqlText.escape(trackId) + "' and playlist_id = '" + sqlText.escape(id) + "'")
+        if isErr(written) { sql.close(db) return "storage-failed" }
+        let changed = sql.changes(db)
+        sql.close(db)
+        if changed == 0 { return "not-found" }
+        return "moved"
+    }
+
     // Opens the playlist database and guarantees the schema exists.
     producer connect() -> sqlite.Database! {
         let db = sql.open(dbPaths.pathFor("playlists.db"))?
