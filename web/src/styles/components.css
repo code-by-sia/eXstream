@@ -647,6 +647,70 @@
         @apply animate-spin;
     }
 
+    .settings-body {
+        @apply grid max-h-[70vh] gap-5 overflow-y-auto;
+    }
+
+    .settings-section {
+        @apply grid gap-3;
+    }
+
+    .settings-section-divided {
+        @apply border-t border-border pt-4;
+    }
+
+    .settings-section-title {
+        @apply text-xs font-semibold uppercase tracking-[0.12em] text-muted;
+    }
+
+    .settings-form {
+        @apply grid gap-2.5;
+    }
+
+    .settings-form-footer {
+        @apply flex items-center justify-between gap-3;
+    }
+
+    .settings-ok {
+        @apply text-xs text-focus;
+    }
+
+    .admin-users {
+        @apply grid gap-3;
+    }
+
+    .admin-users-list {
+        @apply m-0 grid list-none gap-1.5 p-0;
+    }
+
+    .admin-users-row {
+        @apply grid gap-2 rounded-lg border border-border bg-background p-2.5;
+    }
+
+    .admin-users-main {
+        @apply flex items-center gap-2.5;
+    }
+
+    .admin-users-avatar {
+        @apply grid size-9 shrink-0 place-items-center rounded-full bg-accent text-lg;
+    }
+
+    .admin-users-meta {
+        @apply grid min-w-0 flex-1;
+    }
+
+    .admin-users-name {
+        @apply truncate text-sm font-semibold;
+    }
+
+    .admin-users-username {
+        @apply truncate text-xs text-muted;
+    }
+
+    .admin-users-reset {
+        @apply grid grid-cols-[1fr_auto] gap-2;
+    }
+
     .playlist-picker {
         @apply m-0 grid max-h-72 list-none gap-1.5 overflow-y-auto p-0;
     }

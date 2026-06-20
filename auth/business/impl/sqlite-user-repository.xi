@@ -27,6 +27,30 @@ class SqliteUserRepository implements UserRepository {
         return record
     }
 
+    producer all() -> List<UserRecord> {
+        let users = empty List<UserRecord>
+        let opened = connect()
+        if isErr(opened) { return users }
+        let db = opened.value
+
+        let rows = sql.query(db, "select username, password_hash, role, profile_name, email, avatar from users order by username")
+        if isOk(rows) {
+            for row in rows.value.items {
+                users.push(UserRecord {
+                    found: true,
+                    username: reader.textAt(row, "username", ""),
+                    passwordHash: reader.textAt(row, "password_hash", ""),
+                    role: reader.textAt(row, "role", "USER"),
+                    profileName: reader.textAt(row, "profile_name", ""),
+                    email: reader.textAt(row, "email", ""),
+                    avatar: reader.textAt(row, "avatar", "")
+                })
+            }
+        }
+        sql.close(db)
+        return users
+    }
+
     producer save(username: String, password: String, role: String, profileName: String, email: String, avatar: String) -> Bool {
         let opened = connect()
         if isErr(opened) { return false }

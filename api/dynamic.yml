@@ -10,7 +10,7 @@ http:
 
   routers:
     auth-public:
-      rule: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/reset-password`) || PathPrefix(`/auth/verify`)
+      rule: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/verify`)
       service: auth
       entryPoints:
         - web

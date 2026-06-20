@@ -2,6 +2,11 @@ import http from "node:http";
 
 const profile = { username: "test", profileName: "Test Listener", role: "ADMIN", avatar: "🎧", token: "mock-token" };
 
+const users = [
+  { username: "admin", role: "ADMIN", profileName: "Admin", email: "admin@exstream.local", avatar: "🎛️" },
+  { username: "test", role: "USER", profileName: "Test Listener", email: "test@exstream.local", avatar: "🎧" },
+];
+
 const playlists = [
   {
     id: "pl-1",
@@ -67,6 +72,26 @@ http
     const url = new URL(req.url, "http://localhost");
     if (req.method !== "GET") console.log(`${new Date().toISOString()} ${req.method} ${url.pathname}`);
     if (req.method === "POST" && (url.pathname === "/auth/login" || url.pathname === "/auth/register")) return json(res, profile);
+    if (req.method === "POST" && url.pathname === "/auth/change-password") {
+      return readBody(req).then((body) => {
+        const { currentPassword } = JSON.parse(body || "{}");
+        if (currentPassword === "WRONG") return json(res, "current password is incorrect", 401);
+        json(res, { ok: true, message: "password changed" });
+      });
+    }
+    if (url.pathname === "/auth/admin/users" && req.method === "GET") return json(res, { users });
+    if (url.pathname === "/auth/admin/users" && req.method === "POST") {
+      return readBody(req).then((body) => {
+        const data = JSON.parse(body || "{}");
+        if (users.some((u) => u.username === data.username)) return json(res, "user already exists", 409);
+        const user = { username: data.username, role: data.role === "ADMIN" ? "ADMIN" : "USER", profileName: data.profileName, email: data.email, avatar: data.avatar };
+        users.push(user);
+        json(res, { username: user.username, role: user.role, profileName: user.profileName, email: user.email, avatar: user.avatar });
+      });
+    }
+    if (req.method === "POST" && url.pathname === "/auth/admin/reset-password") {
+      return readBody(req).then(() => json(res, { ok: true, message: "password reset" }));
+    }
     if (req.method === "POST" && url.pathname === "/playlists") {
       let body = "";
       req.on("data", (chunk) => (body += chunk));

@@ -31,9 +31,10 @@ spec:
   entryPoints:
     - web
   routes:
-    # Public auth endpoints: register, login, reset password, verify.
+    # Public auth endpoints: register, login, verify. Password changes and
+    # user administration sit under the protected /auth prefix.
     - kind: Rule
-      match: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/reset-password`) || PathPrefix(`/auth/verify`)
+      match: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/verify`)
       priority: 100
       services:
         - name: auth

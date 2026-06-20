@@ -1,7 +1,9 @@
 import React from "react";
-import { LogOut } from "lucide-react";
+import { useState } from "react";
+import { LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { LibraryNav } from "./LibraryNav.jsx";
+import { SettingsDialog } from "./SettingsDialog.jsx";
 import { usePlayerStore } from "../store/usePlayerStore.js";
 import { ThemeToggle } from "./ThemeToggle.jsx";
 import { SidebarContent, SidebarFooter, SidebarHeader, SidebarShell } from "./ui/sidebar.jsx";
@@ -10,6 +12,7 @@ export function Sidebar({ refresh }) {
   const logout = usePlayerStore((s) => s.logout);
   const profile = usePlayerStore((s) => s.profile);
   const navigate = useNavigate();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const avatar = profile?.avatar || "🎧";
   const name = profile?.profileName || profile?.username || "Signed out";
 
@@ -38,12 +41,16 @@ export function Sidebar({ refresh }) {
           </div>
           <div className="sidebar-profile-actions">
             <ThemeToggle />
+            <button type="button" className="sidebar-icon-button" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+              <Settings className="icon-sm" />
+            </button>
             <button type="button" className="sidebar-icon-button" onClick={signOut} aria-label="Log out">
               <LogOut className="icon-sm" />
             </button>
           </div>
         </div>
       </SidebarFooter>
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </SidebarShell>
   );
 }
