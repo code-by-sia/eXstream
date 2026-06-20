@@ -2,8 +2,7 @@
 
 eXstream is a streaming web app with separate services for ingress, auth, file storage, playlists, and the web player written in [Xi](https://code-by-sia.github.io/xi/) programming language.
 
-<img width="1312" height="983" alt="eXstream" src="https://github.com/user-attachments/assets/ca8c5201-9125-4150-8e04-57c09c6f1ac6" />
-
+<img width="1624" height="1005" alt="demo" src="https://github.com/user-attachments/assets/c2d420c2-0fbb-416e-9b3e-09e323f4213a" />
 
 ## Architecture
 
