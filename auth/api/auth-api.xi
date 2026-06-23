@@ -7,7 +7,7 @@ class AuthApi implements WebRequestHandler {
 
     mapper getBaseUrl() -> String => "/auth"
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/register" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/register") {
         let body = req.parse(RegisterRequest)
         if text.isEmpty(body.username) or text.isEmpty(body.password) {
             res.sendStatus(400, "username and password are required")
@@ -32,7 +32,7 @@ class AuthApi implements WebRequestHandler {
         res.send(authResponse(tokens.issue(body.username, role), body.username, role, body.profileName, body.email, body.avatar))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/login" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/login") {
         let body = req.parse(LoginRequest)
         let user = users.find(body.username)
         if not user.found or user.passwordHash != crypto.sha256Hex(body.password) {
@@ -44,7 +44,7 @@ class AuthApi implements WebRequestHandler {
 
     // Authenticated: a signed-in user changes their own password after
     // confirming the current one.
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/change-password" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/change-password") {
         let ctx = identity.context(req)
         if not ctx.ok {
             res.sendStatus(403, "missing identity headers")
@@ -69,7 +69,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     // Admin only: reset another user's password without the old one.
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/admin/reset-password" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/admin/reset-password") {
         if not isAdmin(req) {
             res.sendStatus(403, "admin access required")
             return
@@ -89,7 +89,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     // Admin only: list every user (no password hashes).
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/admin/users" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/admin/users") {
         if not isAdmin(req) {
             res.sendStatus(403, "admin access required")
             return
@@ -98,7 +98,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     // Admin only: create a user with a chosen role.
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/admin/users" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req,"POST", "/auth/admin/users")   {
         if not isAdmin(req) {
             res.sendStatus(403, "admin access required")
             return
@@ -124,7 +124,7 @@ class AuthApi implements WebRequestHandler {
         res.send(profileResponse(body.username, role, users.find(body.username)))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/verify" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/verify") {
         let ctx = tokens.verify(identity.bearerToken(req.header("Authorization")))
         if not ctx.ok {
             res.sendStatus(401, "invalid token")
@@ -134,7 +134,7 @@ class AuthApi implements WebRequestHandler {
         res.send(profileResponse(ctx.username, ctx.role, user))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/auth/profile" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/profile") {
         let ctx = identity.context(req)
         if not ctx.ok {
             res.sendStatus(403, "missing identity headers")
