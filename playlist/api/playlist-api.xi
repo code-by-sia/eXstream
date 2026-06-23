@@ -16,12 +16,12 @@ class PlaylistApi implements WebRequestHandler {
         res.sendText(200, "{\"ok\":true,\"message\":\"playlist service up\"}")
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/playlists" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlists") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         res.sendText(200, presenter.playlists(playlists.listForUser(req.header("X-Username"), identity.roleOf(req))))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/playlists" and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists")  {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let body = req.parse(PlaylistWrite)
@@ -32,7 +32,7 @@ class PlaylistApi implements WebRequestHandler {
         res.sendText(200, presenter.playlist(playlists.get(id)))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and text.endsWith(req.path, "/tracks") and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists/:playlistId/tracks") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let playlist = playlists.get(paths.playlistId(req.path))
@@ -47,7 +47,7 @@ class PlaylistApi implements WebRequestHandler {
         res.sendText(200, presenter.playlist(playlists.get(playlist.id)))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and text.contains(req.path, "/tracks/") and req.method == "PUT" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "PUT", "/playlists/:playlistId/tracks") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let playlist = playlists.get(paths.playlistId(req.path))
@@ -64,7 +64,7 @@ class PlaylistApi implements WebRequestHandler {
         sendTrackWriteResult(res, playlist.id, result)
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.contains(req.path, "/tracks/") and text.endsWith(req.path, "/move") and req.method == "POST" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists/:playlistId/tracks/:trackId/move") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let source = playlists.get(paths.playlistId(req.path))
@@ -83,7 +83,7 @@ class PlaylistApi implements WebRequestHandler {
         sendTrackWriteResult(res, target.id, result)
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and text.contains(req.path, "/tracks/") and req.method == "DELETE" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "DELETE", "/playlists/:playlistId/tracks/:trackId") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let playlist = playlists.get(paths.playlistId(req.path))
@@ -97,7 +97,7 @@ class PlaylistApi implements WebRequestHandler {
         sendTrackWriteResult(res, playlist.id, result)
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlists/:id") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let playlist = playlists.get(paths.playlistId(req.path))
@@ -106,7 +106,7 @@ class PlaylistApi implements WebRequestHandler {
         res.sendText(200, presenter.playlist(playlist))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/playlists/") and req.method == "DELETE" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "DELETE", "/playlists/:id") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
         let playlist = playlists.get(paths.playlistId(req.path))
@@ -116,12 +116,12 @@ class PlaylistApi implements WebRequestHandler {
         if playlists.remove(playlist.id) { res.sendText(200, "{\"ok\":true,\"message\":\"deleted\"}") } else { res.sendStatus(500, "failed to delete playlist") }
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/playlist/search" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlist/search") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         res.sendText(200, presenter.playlists(playlists.searchPlaylists(req.query("q"), req.header("X-Username"), identity.roleOf(req))))
     }
 
-    action handle(req: HttpRequest, res: HttpResponse) where req.path == "/music/search" and req.method == "GET" {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/music/search") {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
         res.sendText(200, presenter.musicHits(playlists.searchTracks(req.query("q"), req.header("X-Username"), identity.roleOf(req))))
     }
