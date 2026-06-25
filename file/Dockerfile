@@ -16,7 +16,7 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
     HOMEBREW_NO_AUTO_UPDATE=1 \
     HOMEBREW_NO_ENV_HINTS=1
 
-RUN brew install code-by-sia/x/xi
+RUN brew install code-by-sia/xi/xi
 
 COPY --chown=linuxbrew:linuxbrew common ./common
 COPY --chown=linuxbrew:linuxbrew file ./file
