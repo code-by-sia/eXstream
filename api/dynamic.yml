@@ -7,47 +7,59 @@ http:
         authResponseHeaders:
           - X-Username
           - X-Role
+    # All API traffic is published under /api; strip it before forwarding so
+    # the services keep their unprefixed routes (/auth, /playlists, /file).
+    strip-api:
+      stripPrefix:
+        prefixes:
+          - /api
 
   routers:
     auth-public:
-      rule: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/verify`)
+      rule: PathPrefix(`/api/auth/register`) || PathPrefix(`/api/auth/login`) || PathPrefix(`/api/auth/verify`)
       service: auth
+      middlewares:
+        - strip-api
       entryPoints:
         - web
       priority: 100
 
     auth-protected:
-      rule: PathPrefix(`/auth`)
+      rule: PathPrefix(`/api/auth`)
       service: auth
       middlewares:
         - bearer-auth
+        - strip-api
       entryPoints:
         - web
       priority: 90
 
     file-upload:
-      rule: Path(`/file`) && Method(`POST`)
+      rule: Path(`/api/file`) && Method(`POST`)
       service: file
       middlewares:
         - bearer-auth
+        - strip-api
       entryPoints:
         - web
       priority: 120
 
     file:
-      rule: PathPrefix(`/file`) || PathPrefix(`/files`)
+      rule: PathPrefix(`/api/file`) || PathPrefix(`/api/files`)
       service: file
       middlewares:
         - bearer-auth
+        - strip-api
       entryPoints:
         - web
       priority: 80
 
     playlist:
-      rule: PathPrefix(`/playlists`) || PathPrefix(`/playlist/search`) || PathPrefix(`/music/search`)
+      rule: PathPrefix(`/api/playlists`) || PathPrefix(`/api/playlist/search`) || PathPrefix(`/api/music/search`)
       service: playlist
       middlewares:
         - bearer-auth
+        - strip-api
       entryPoints:
         - web
       priority: 80

@@ -20,14 +20,14 @@ test("falls back to legacy file upload route when gateway returns 404", async ()
   try {
     globalThis.fetch = async (path, options) => {
       calls.push({ path, options });
-      if (path === "/file") return new Response("not found", { status: 404 });
+      if (path === "/api/file") return new Response("not found", { status: 404 });
       return new Response(JSON.stringify({ ok: true }), { status: 200 });
     };
 
     const url = await uploadMusicFile("token", { name: "My Song.mp3" });
 
     assert.equal(url, "/file/music/song-id-my-song.mp3");
-    assert.deepEqual(calls.map((call) => call.path), ["/file", "/file/music/song-id-my-song.mp3"]);
+    assert.deepEqual(calls.map((call) => call.path), ["/api/file", "/api/file/music/song-id-my-song.mp3"]);
     assert.equal(calls[1].options.headers.Authorization, "Bearer token");
   } finally {
     Object.defineProperty(globalThis, "crypto", cryptoDescriptor);

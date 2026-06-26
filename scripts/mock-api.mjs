@@ -70,6 +70,8 @@ function readBody(req) {
 http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://localhost");
+    // The gateway strips the /api prefix before services see it; do the same.
+    if (url.pathname.startsWith("/api/")) url.pathname = url.pathname.slice(4);
     if (req.method !== "GET") console.log(`${new Date().toISOString()} ${req.method} ${url.pathname}`);
     if (req.method === "POST" && (url.pathname === "/auth/login" || url.pathname === "/auth/register")) return json(res, profile);
     if (req.method === "POST" && url.pathname === "/auth/change-password") {

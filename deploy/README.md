@@ -102,14 +102,15 @@ kubectl -n kube-system port-forward svc/traefik 8080:80
 ```
 
 Then open http://localhost:8080 — the SPA is served at `/`, the APIs under
-`/auth`, `/playlists`, `/music/search`, `/file`. The auth service seeds the
+`/api/auth`, `/api/playlists`, `/api/music/search`, `/api/file` (Traefik strips
+the `/api` prefix before forwarding). The auth service seeds the
 `admin`/`admin123` and `test`/`test123` development users on first start
 (backed by the `auth-data` volume, so they survive restarts).
 
 Smoke test through the ingress:
 
 ```sh
-curl -X POST http://localhost:8080/auth/login \
+curl -X POST http://localhost:8080/api/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"test","password":"test123"}'
 ```

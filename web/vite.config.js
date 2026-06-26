@@ -9,15 +9,7 @@ export default defineConfig({
     host: "0.0.0.0",
     port: 7001,
     proxy: {
-      "/auth": apiTarget,
-      "/playlists": {
-        target: apiTarget,
-        bypass: (req) => ((req.headers.accept || "").includes("text/html") ? "/index.html" : undefined),
-      },
-      "/playlist": apiTarget,
-      "/music": apiTarget,
-      "/file": apiTarget,
-      "/files": apiTarget,
+      "/api": apiTarget,
     },
   },
 });

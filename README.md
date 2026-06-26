@@ -29,9 +29,9 @@ flowchart LR
 
     Browser -->|"HTTP"| Traefik
     Traefik -->|"/ (SPA)"| Web
-    Traefik -->|"/auth/*"| Auth
-    Traefik -->|"/playlists, /playlist/search, /music/search"| Playlist
-    Traefik -->|"/file, /files"| File
+    Traefik -->|"/api/auth/* (strip /api)"| Auth
+    Traefik -->|"/api/playlists, /api/music/search (strip /api)"| Playlist
+    Traefik -->|"/api/file, /api/files (strip /api)"| File
     Traefik -.->|"ForwardAuth: adds X-Username / X-Role"| ForwardAuth
 
     Auth --- AuthData
@@ -39,7 +39,7 @@ flowchart LR
     File --- FileData
 ```
 
-Public routes (`/auth/register`, `/auth/login`, `/auth/reset-password`, `/auth/verify`, and the SPA) skip the auth middleware; every other API route passes through `forward-auth`, which validates the bearer JWT and forwards the caller identity to the services as `X-Username` and `X-Role` headers. The `auth` and `forward-auth` services share the same `JWT_SECRET`.
+All backend endpoints are published under the `/api` prefix; Traefik strips it (`StripPrefix`) before forwarding, so the services keep their unprefixed routes (`/auth`, `/playlists`, `/file`). Public routes (`/api/auth/register`, `/api/auth/login`, `/api/auth/verify`, and the SPA) skip the auth middleware; every other API route passes through `forward-auth`, which validates the bearer JWT and forwards the caller identity to the services as `X-Username` and `X-Role` headers. The `auth` and `forward-auth` services share the same `JWT_SECRET`.
 
 ## Modules
 
@@ -187,7 +187,7 @@ Run service smoke tests:
 Register:
 
 ```sh
-curl -X POST http://localhost:8080/auth/register \
+curl -X POST http://localhost:8080/api/auth/register \
   -H 'Content-Type: application/json' \
   -d '{"username":"sia","password":"secret","profileName":"Sia","email":"sia@example.com","avatar":"🎧"}'
 ```
@@ -195,7 +195,7 @@ curl -X POST http://localhost:8080/auth/register \
 Create a playlist through the gateway:
 
 ```sh
-curl -X POST http://localhost:8080/playlists \
+curl -X POST http://localhost:8080/api/playlists \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"name":"Favorites","description":"Daily rotation"}'

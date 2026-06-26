@@ -4,7 +4,7 @@ import { request } from "../api/client.js";
 
 test("sends bearer tokens and parses json responses", async () => {
   globalThis.fetch = async (path, options) => {
-    assert.equal(path, "/auth/profile");
+    assert.equal(path, "/api/auth/profile");
     assert.equal(options.headers.Authorization, "Bearer abc");
     return new Response(JSON.stringify({ username: "test" }), { status: 200 });
   };
@@ -25,7 +25,7 @@ test("throws response text for failed requests", async () => {
 
 test("omits authorization when token is empty", async () => {
   globalThis.fetch = async (path, options) => {
-    assert.equal(path, "/auth/login");
+    assert.equal(path, "/api/auth/login");
     assert.equal(options.headers.Authorization, undefined);
     return new Response(JSON.stringify({ token: "ok" }), { status: 200 });
   };

@@ -20,6 +20,20 @@ spec:
       - X-Username
       - X-Role
 ---
+# All API traffic is published under /api; this strips the prefix before
+# forwarding so the services keep their unprefixed routes.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-api
+  namespace: exstream
+  labels:
+    app.kubernetes.io/name: exstream
+spec:
+  stripPrefix:
+    prefixes:
+      - /api
+---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -32,50 +46,56 @@ spec:
     - web
   routes:
     # Public auth endpoints: register, login, verify. Password changes and
-    # user administration sit under the protected /auth prefix.
+    # user administration sit under the protected /api/auth prefix.
     - kind: Rule
-      match: PathPrefix(`/auth/register`) || PathPrefix(`/auth/login`) || PathPrefix(`/auth/verify`)
+      match: PathPrefix(`/api/auth/register`) || PathPrefix(`/api/auth/login`) || PathPrefix(`/api/auth/verify`)
       priority: 100
+      middlewares:
+        - name: strip-api
       services:
         - name: auth
           port: 4001
 
-    # Everything else under /auth requires a valid bearer token.
+    # Everything else under /api/auth requires a valid bearer token.
     - kind: Rule
-      match: PathPrefix(`/auth`)
+      match: PathPrefix(`/api/auth`)
       priority: 90
       middlewares:
         - name: bearer-auth
+        - name: strip-api
       services:
         - name: auth
           port: 4001
 
     # File upload.
     - kind: Rule
-      match: Path(`/file`) && Method(`POST`)
+      match: Path(`/api/file`) && Method(`POST`)
       priority: 120
       middlewares:
         - name: bearer-auth
+        - name: strip-api
       services:
         - name: file
           port: 6001
 
     # File reads, updates, deletes, and listing.
     - kind: Rule
-      match: PathPrefix(`/file`) || PathPrefix(`/files`)
+      match: PathPrefix(`/api/file`) || PathPrefix(`/api/files`)
       priority: 80
       middlewares:
         - name: bearer-auth
+        - name: strip-api
       services:
         - name: file
           port: 6001
 
     # Playlist CRUD and music search.
     - kind: Rule
-      match: PathPrefix(`/playlists`) || PathPrefix(`/playlist/search`) || PathPrefix(`/music/search`)
+      match: PathPrefix(`/api/playlists`) || PathPrefix(`/api/playlist/search`) || PathPrefix(`/api/music/search`)
       priority: 80
       middlewares:
         - name: bearer-auth
+        - name: strip-api
       services:
         - name: playlist
           port: 5001
