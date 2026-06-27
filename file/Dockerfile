@@ -11,12 +11,20 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 USER linuxbrew
-ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}" \
-    HOMEBREW_NO_ANALYTICS=1 \
-    HOMEBREW_NO_AUTO_UPDATE=1 \
-    HOMEBREW_NO_ENV_HINTS=1
+ENV PATH="/home/linuxbrew/xi/bin:${PATH}"
 
-RUN brew install code-by-sia/xi/xi
+# Install the Xi toolchain straight from the GitHub release. The Homebrew
+# formula lags behind, so pin (and bump) the version here instead.
+ARG XI_VERSION=0.0.83
+RUN arch="$(uname -m)" \
+    && case "$arch" in \
+         aarch64|arm64) asset="linux-arm64" ;; \
+         x86_64|amd64)  asset="linux-x86_64" ;; \
+         *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
+       esac \
+    && mkdir -p /home/linuxbrew/xi \
+    && curl -fsSL "https://github.com/code-by-sia/xi/releases/download/v${XI_VERSION}/xi-v${XI_VERSION}-${asset}.tar.gz" \
+       | tar xz -C /home/linuxbrew/xi --strip-components=1
 
 COPY --chown=linuxbrew:linuxbrew common ./common
 COPY --chown=linuxbrew:linuxbrew file ./file
