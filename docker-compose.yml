@@ -30,7 +30,7 @@ services:
     ports:
       - "4001:4001"
     volumes:
-      - auth-data:/app/data
+      - ./data/auth:/app/data
 
   playlist:
     build:
@@ -39,7 +39,7 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      - playlist-data:/app/data
+      - ./data/playlist:/app/data
 
   file:
     build:
@@ -48,7 +48,7 @@ services:
     ports:
       - "6001:6001"
     volumes:
-      - file-data:/app/data
+      - ./data/file:/app/data
 
   web:
     build:
@@ -61,7 +61,4 @@ services:
       - web-node-modules:/app/node_modules
 
 volumes:
-  auth-data:
-  playlist-data:
-  file-data:
   web-node-modules:
