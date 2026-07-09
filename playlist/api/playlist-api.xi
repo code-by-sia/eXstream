@@ -24,7 +24,7 @@ class PlaylistApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists")  {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
-        let body = req.parse(PlaylistWrite)
+        let body = web.body(req) as PlaylistWrite
         if text.isEmpty(body.name) { res.sendStatus(400, "playlist name is required") return }
 
         let id = playlists.create(body.name, body.description, req.header("X-Username"))
@@ -39,7 +39,7 @@ class PlaylistApi implements WebRequestHandler {
         if not playlist.found { res.sendStatus(404, "playlist not found") return }
         if not access.canAccess(playlist, req.header("X-Username"), identity.roleOf(req)) { res.sendStatus(403, "playlist access denied") return }
 
-        let body = req.parse(TrackWrite)
+        let body = web.body(req) as TrackWrite
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
         let trackId = playlists.addTrack(playlist.id, body.title, body.artist, body.url, req.header("X-Username"), body.coverUrl)
@@ -57,7 +57,7 @@ class PlaylistApi implements WebRequestHandler {
         let trackId = paths.trackId(req.path)
         if not paths.isSafeId(trackId) { res.sendStatus(400, "invalid track id") return }
 
-        let body = req.parse(TrackWrite)
+        let body = web.body(req) as TrackWrite
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
         let result = playlists.updateTrack(playlist.id, trackId, body.title, body.artist, body.url, body.coverUrl)
@@ -74,7 +74,7 @@ class PlaylistApi implements WebRequestHandler {
         let trackId = paths.trackId(req.path)
         if not paths.isSafeId(trackId) { res.sendStatus(400, "invalid track id") return }
 
-        let body = req.parse(TrackMove)
+        let body = web.body(req) as TrackMove
         let target = playlists.get(body.targetPlaylistId)
         if not target.found { res.sendStatus(404, "target playlist not found") return }
         if not access.canAccess(target, req.header("X-Username"), identity.roleOf(req)) { res.sendStatus(403, "target playlist access denied") return }

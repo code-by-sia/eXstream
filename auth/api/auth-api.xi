@@ -9,7 +9,7 @@ class AuthApi implements WebRequestHandler {
     mapper getBaseUrl() -> String => "/auth"
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/register") {
-        let body = req.parse(RegisterRequest)
+        let body = web.body(req) as RegisterRequest
         if text.isEmpty(body.username) or text.isEmpty(body.password) {
             res.sendStatus(400, "username and password are required")
             return
@@ -34,7 +34,7 @@ class AuthApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/login") {
-        let body = req.parse(LoginRequest)
+        let body = web.body(req) as LoginRequest
         let user = users.find(body.username)
         if not user.found or user.passwordHash != crypto.sha256Hex(body.password) {
             res.sendStatus(401, "invalid username or password")
@@ -51,7 +51,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(403, "missing identity headers")
             return
         }
-        let body = req.parse(ChangePasswordRequest)
+        let body = web.body(req) as ChangePasswordRequest
         if text.isEmpty(body.newPassword) {
             res.sendStatus(400, "new password is required")
             return
@@ -75,7 +75,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(403, "admin access required")
             return
         }
-        let body = req.parse(AdminResetRequest)
+        let body = web.body(req) as AdminResetRequest
         if text.isEmpty(body.username) or text.isEmpty(body.newPassword) {
             res.sendStatus(400, "username and new password are required")
             return
@@ -104,7 +104,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(403, "admin access required")
             return
         }
-        let body = req.parse(CreateUserRequest)
+        let body = web.body(req) as CreateUserRequest
         if text.isEmpty(body.username) or text.isEmpty(body.password) {
             res.sendStatus(400, "username and password are required")
             return

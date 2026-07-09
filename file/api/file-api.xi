@@ -48,7 +48,7 @@ class FileApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "POST" {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
-        let body = req.parse(FileWrite)
+        let body = web.body(req) as FileWrite
         let result = files.create(paths.fromRequest(req), body.content)
         sendWriteResult(res, result, "create")
     }
@@ -56,7 +56,7 @@ class FileApi implements WebRequestHandler {
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "PUT" {
         if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
 
-        let body = req.parse(FileWrite)
+        let body = web.body(req) as FileWrite
         let result = files.update(paths.fromRequest(req), body.content)
         sendWriteResult(res, result, "update")
     }
