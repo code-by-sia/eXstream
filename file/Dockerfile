@@ -15,7 +15,7 @@ ENV PATH="/home/linuxbrew/xi/bin:${PATH}"
 
 # Install the Xi toolchain straight from the GitHub release. The Homebrew
 # formula lags behind, so pin (and bump) the version here instead.
-ARG XI_VERSION=0.0.83
+ARG XI_VERSION=0.0.91
 RUN arch="$(uname -m)" \
     && case "$arch" in \
          aarch64|arm64) asset="linux-arm64" ;; \

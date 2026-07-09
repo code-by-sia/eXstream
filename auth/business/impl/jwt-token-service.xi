@@ -5,11 +5,15 @@ import "std/process.xi"
 import "std/text.xi"
 
 class JwtTokenService implements TokenService {
-    deps { json: JsonText, identity: AuthIdentity }
+    deps { identity: AuthIdentity }
 
     mapper issue(username: String, role: String) -> String {
+        let claims = json.object()
+        claims = json.set(claims, "sub", json.str(username))
+        claims = json.set(claims, "role", json.str(role))
+
         let header = base64UrlText("{\"alg\":\"HS256\",\"typ\":\"JWT\"}")
-        let payload = base64UrlText("{\"sub\":" + json.encode(username) + ",\"role\":" + json.encode(role) + "}")
+        let payload = base64UrlText(json.stringify(claims))
         let signingInput = header + "." + payload
         return signingInput + "." + jwtSignature(signingInput)
     }

@@ -1,9 +1,10 @@
 import "std/crypto.xi"
+import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
 class AuthApi implements WebRequestHandler {
-    deps { users: UserRepository, tokens: TokenService, identity: AuthIdentity, json: JsonText }
+    deps { users: UserRepository, tokens: TokenService, identity: AuthIdentity }
 
     mapper getBaseUrl() -> String => "/auth"
 
@@ -165,19 +166,18 @@ class AuthApi implements WebRequestHandler {
     }
 
     mapper usersJson(records: List<UserRecord>) -> String {
-        let out = "{\"users\":["
-        let first = true
+        let arr = json.array()
         for user in records {
-            if not first { out = out + "," }
-            first = false
-            out = out + "{"
-                + "\"username\":" + json.encode(user.username) + ","
-                + "\"role\":" + json.encode(user.role) + ","
-                + "\"profileName\":" + json.encode(user.profileName) + ","
-                + "\"email\":" + json.encode(user.email) + ","
-                + "\"avatar\":" + json.encode(user.avatar)
-                + "}"
+            let obj = json.object()
+            obj = json.set(obj, "username", json.str(user.username))
+            obj = json.set(obj, "role", json.str(user.role))
+            obj = json.set(obj, "profileName", json.str(user.profileName))
+            obj = json.set(obj, "email", json.str(user.email))
+            obj = json.set(obj, "avatar", json.str(user.avatar))
+            arr = json.push(arr, obj)
         }
-        return out + "]}"
+        let root = json.object()
+        root = json.set(root, "users", arr)
+        return json.stringify(root)
     }
 }

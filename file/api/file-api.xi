@@ -1,9 +1,10 @@
 import "std/crypto.xi"
+import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
 class FileApi implements WebRequestHandler {
-    deps { files: FileRepository, identity: AuthIdentity, json: JsonText, paths: FilePaths }
+    deps { files: FileRepository, identity: AuthIdentity, paths: FilePaths }
 
     mapper getBaseUrl() -> String => "/"
 
@@ -21,7 +22,7 @@ class FileApi implements WebRequestHandler {
         let filePath = "music/" + newUuid()
         let result = files.create(filePath, req.body)
         if result == "created" {
-            res.sendText(200, "{\"ok\":true,\"path\":" + json.encode(filePath) + ",\"url\":" + json.encode("/file/" + filePath) + "}")
+            res.send(UploadResult { ok: true, path: filePath, url: "/file/" + filePath })
             return
         }
         res.sendStatus(500, "failed to upload file")
@@ -80,14 +81,11 @@ class FileApi implements WebRequestHandler {
     }
 
     mapper fileListJson(filePaths: List<String>) -> String {
-        let out = "{\"files\":["
-        let first = true
-        for p in filePaths {
-            if not first { out = out + "," }
-            first = false
-            out = out + json.encode(p)
-        }
-        return out + "]}"
+        let arr = json.array()
+        for p in filePaths { arr = json.push(arr, json.str(p)) }
+        let root = json.object()
+        root = json.set(root, "files", arr)
+        return json.stringify(root)
     }
 
     consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {
