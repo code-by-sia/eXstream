@@ -1,10 +1,9 @@
-import "std/crypto.xi"
 import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
 class FileApi implements WebRequestHandler {
-    deps { files: FileRepository, identity: AuthIdentity, paths: FilePaths }
+    deps { service: FileService, identity: AuthIdentity, paths: FilePaths }
 
     mapper getBaseUrl() -> String => "/"
 
@@ -14,18 +13,14 @@ class FileApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, fileListJson(files.list()))
+        res.sendText(200, fileListJson(service.list()))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
         if not requireIdentity(req, res) { return }
-        let filePath = "music/" + newUuid()
-        let result = files.create(filePath, req.body)
-        if result == "created" {
-            res.send(UploadResult { ok: true, path: filePath, url: "/file/" + filePath })
-            return
-        }
-        res.sendStatus(500, "failed to upload file")
+        let stored = service.store(req.body)
+        if not stored.found { res.sendStatus(500, "failed to upload file") return }
+        res.send(UploadResult { ok: true, path: stored.path, url: "/file/" + stored.path })
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "GET" {
@@ -37,7 +32,7 @@ class FileApi implements WebRequestHandler {
             return
         }
 
-        let file = files.get(filePath)
+        let file = service.read(filePath)
         if not file.found {
             res.sendStatus(404, "file not found")
             return
@@ -49,23 +44,20 @@ class FileApi implements WebRequestHandler {
         if not requireIdentity(req, res) { return }
 
         let body = web.body(req) as FileWrite
-        let result = files.create(paths.fromRequest(req), body.content)
-        sendWriteResult(res, result, "create")
+        sendWriteResult(res, service.create(paths.fromRequest(req), body.content), "create")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "PUT" {
         if not requireIdentity(req, res) { return }
 
         let body = web.body(req) as FileWrite
-        let result = files.update(paths.fromRequest(req), body.content)
-        sendWriteResult(res, result, "update")
+        sendWriteResult(res, service.update(paths.fromRequest(req), body.content), "update")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "DELETE" {
         if not requireIdentity(req, res) { return }
 
-        let result = files.delete(paths.fromRequest(req))
-        sendWriteResult(res, result, "delete")
+        sendWriteResult(res, service.delete(paths.fromRequest(req)), "delete")
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
@@ -77,14 +69,6 @@ class FileApi implements WebRequestHandler {
         if identity.hasIdentity(req) { return true }
         res.sendStatus(403, "missing identity headers")
         return false
-    }
-
-    mapper newUuid() -> String {
-        return crypto.randomHex(4) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(6)
     }
 
     mapper fileListJson(filePaths: List<String>) -> String {

@@ -1,10 +1,9 @@
-import "std/crypto.xi"
 import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
 class AuthApi implements WebRequestHandler {
-    deps { users: UserRepository, tokens: TokenService, identity: AuthIdentity }
+    deps { service: AuthService, identity: AuthIdentity, tokens: TokenService }
 
     mapper getBaseUrl() -> String => "/auth"
 
@@ -19,28 +18,20 @@ class AuthApi implements WebRequestHandler {
             return
         }
 
-        let existing = users.find(body.username)
-        if existing.found {
-            res.sendStatus(409, "user already exists")
-            return
-        }
-
-        let role = "USER"
-        if not users.save(body.username, body.password, role, body.profileName, body.email, body.avatar) {
-            res.sendStatus(500, "failed to save user")
-            return
-        }
-        res.send(authResponse(tokens.issue(body.username, role), body.username, role, body.profileName, body.email, body.avatar))
+        let result = service.registerUser(body.username, body.password, body.profileName, body.email, body.avatar)
+        if result.status == "exists" { res.sendStatus(409, "user already exists") return }
+        if result.status != "ok" { res.sendStatus(500, "failed to save user") return }
+        res.send(authResponse(result))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/login") {
         let body = web.body(req) as LoginRequest
-        let user = users.find(body.username)
-        if not user.found or user.passwordHash != crypto.sha256Hex(body.password) {
+        let result = service.login(body.username, body.password)
+        if result.status != "ok" {
             res.sendStatus(401, "invalid username or password")
             return
         }
-        res.send(authResponse(tokens.issue(user.username, user.role), user.username, user.role, user.profileName, user.email, user.avatar))
+        res.send(authResponse(result))
     }
 
     // Authenticated: a signed-in user changes their own password after
@@ -56,16 +47,10 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(400, "new password is required")
             return
         }
-        let user = users.find(ctx.username)
-        if not user.found {
-            res.sendStatus(404, "user not found")
-            return
-        }
-        if user.passwordHash != crypto.sha256Hex(body.currentPassword) {
-            res.sendStatus(401, "current password is incorrect")
-            return
-        }
-        users.save(user.username, body.newPassword, user.role, user.profileName, user.email, user.avatar)
+
+        let result = service.changePassword(ctx.username, body.currentPassword, body.newPassword)
+        if result.status == "not-found" { res.sendStatus(404, "user not found") return }
+        if result.status == "wrong-password" { res.sendStatus(401, "current password is incorrect") return }
         res.send(Message { ok: true, message: "password changed" })
     }
 
@@ -77,23 +62,20 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(400, "username and new password are required")
             return
         }
-        let target = users.find(body.username)
-        if not target.found {
-            res.sendStatus(404, "user not found")
-            return
-        }
-        users.save(target.username, body.newPassword, target.role, target.profileName, target.email, target.avatar)
+
+        let result = service.resetPassword(body.username, body.newPassword)
+        if result.status == "not-found" { res.sendStatus(404, "user not found") return }
         res.send(Message { ok: true, message: "password reset" })
     }
 
     // Admin only: list every user (no password hashes).
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/admin/users") {
         if not requireAdmin(req, res) { return }
-        res.sendText(200, usersJson(users.all()))
+        res.sendText(200, usersJson(service.listUsers()))
     }
 
     // Admin only: create a user with a chosen role.
-    action handle(req: HttpRequest, res: HttpResponse) where web.route(req,"POST", "/auth/admin/users")   {
+    action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/admin/users") {
         if not requireAdmin(req, res) { return }
         let body = web.body(req) as CreateUserRequest
         if text.isEmpty(body.username) or text.isEmpty(body.password) {
@@ -104,16 +86,11 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(400, "profile name and email are required")
             return
         }
-        if users.find(body.username).found {
-            res.sendStatus(409, "user already exists")
-            return
-        }
-        let role = identity.cleanRole(body.role)
-        if not users.save(body.username, body.password, role, body.profileName, body.email, body.avatar) {
-            res.sendStatus(500, "failed to create user")
-            return
-        }
-        res.send(profileResponse(body.username, role, users.find(body.username)))
+
+        let result = service.createUser(body.username, body.password, body.role, body.profileName, body.email, body.avatar)
+        if result.status == "exists" { res.sendStatus(409, "user already exists") return }
+        if result.status != "ok" { res.sendStatus(500, "failed to create user") return }
+        res.send(profileResponse(result.user.username, result.user.role, result.user))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/verify") {
@@ -122,8 +99,7 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(401, "invalid token")
             return
         }
-        let user = users.find(ctx.username)
-        res.send(profileResponse(ctx.username, ctx.role, user))
+        res.send(profileResponse(ctx.username, ctx.role, service.findUser(ctx.username)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/profile") {
@@ -132,16 +108,22 @@ class AuthApi implements WebRequestHandler {
             res.sendStatus(403, "missing identity headers")
             return
         }
-        let user = users.find(ctx.username)
-        res.send(profileResponse(ctx.username, ctx.role, user))
+        res.send(profileResponse(ctx.username, ctx.role, service.findUser(ctx.username)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
 
-    mapper authResponse(token: String, username: String, role: String, profileName: String, email: String, avatar: String) -> AuthResponse {
-        return AuthResponse { token: token, username: username, role: role, profileName: profileName, email: email, avatar: avatar }
+    mapper authResponse(result: AuthOutcome) -> AuthResponse {
+        return AuthResponse {
+            token: result.token,
+            username: result.user.username,
+            role: result.user.role,
+            profileName: result.user.profileName,
+            email: result.user.email,
+            avatar: result.user.avatar
+        }
     }
 
     mapper profileResponse(username: String, role: String, user: UserRecord) -> ProfileResponse {

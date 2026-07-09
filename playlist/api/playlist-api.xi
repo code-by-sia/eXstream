@@ -3,11 +3,10 @@ import "std/web.xi"
 
 class PlaylistApi implements WebRequestHandler {
     deps {
-        playlists: PlaylistRepository
+        service: PlaylistService
         identity: AuthIdentity
         presenter: PlaylistPresenter
         paths: PlaylistPaths
-        access: PlaylistAccess
     }
 
     mapper getBaseUrl() -> String => "/"
@@ -18,7 +17,7 @@ class PlaylistApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlists") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.playlists(playlists.listForUser(actor(req), identity.roleOf(req))))
+        res.sendText(200, presenter.playlists(service.listFor(actor(req), identity.roleOf(req))))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists") {
@@ -27,26 +26,25 @@ class PlaylistApi implements WebRequestHandler {
         let body = web.body(req) as PlaylistWrite
         if text.isEmpty(body.name) { res.sendStatus(400, "playlist name is required") return }
 
-        let id = playlists.create(body.name, body.description, actor(req))
-        if text.isEmpty(id) { res.sendStatus(500, "failed to create playlist") return }
-        res.sendText(200, presenter.playlist(playlists.get(id)))
+        let created = service.create(body.name, body.description, actor(req))
+        if not created.found { res.sendStatus(500, "failed to create playlist") return }
+        res.sendText(200, presenter.playlist(created))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists/:playlistId/tracks") {
-        let playlist = accessiblePlaylist(req, res)
-        if not playlist.found { return }
+        if not requireIdentity(req, res) { return }
 
         let body = web.body(req) as TrackWrite
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
-        let trackId = playlists.addTrack(playlist.id, body.title, body.artist, body.url, actor(req), body.coverUrl)
-        if text.isEmpty(trackId) { res.sendStatus(500, "failed to add track") return }
-        res.sendText(200, presenter.playlist(playlists.get(playlist.id)))
+        let result = service.addTrack(paths.playlistId(req.path), body.title, body.artist, body.url, actor(req), identity.roleOf(req), body.coverUrl)
+        if result.status == "failed" { res.sendStatus(500, "failed to add track") return }
+        if not resolved(res, result) { return }
+        res.sendText(200, presenter.playlist(result.playlist))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "PUT", "/playlists/:playlistId/tracks") {
-        let playlist = accessiblePlaylist(req, res)
-        if not playlist.found { return }
+        if not requireIdentity(req, res) { return }
 
         let trackId = safeTrackId(req, res)
         if text.isEmpty(trackId) { return }
@@ -54,92 +52,66 @@ class PlaylistApi implements WebRequestHandler {
         let body = web.body(req) as TrackWrite
         if text.isEmpty(body.title) or text.isEmpty(body.url) { res.sendStatus(400, "title and url are required") return }
 
-        sendTrackWriteResult(res, playlist.id, playlists.updateTrack(playlist.id, trackId, body.title, body.artist, body.url, body.coverUrl))
+        finishTrackWrite(res, service.updateTrack(paths.playlistId(req.path), trackId, body.title, body.artist, body.url, body.coverUrl, actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists/:playlistId/tracks/:trackId/move") {
-        let source = accessiblePlaylist(req, res)
-        if not source.found { return }
+        if not requireIdentity(req, res) { return }
 
         let trackId = safeTrackId(req, res)
         if text.isEmpty(trackId) { return }
 
         let body = web.body(req) as TrackMove
-        let target = playlists.get(body.targetPlaylistId)
-        if not target.found { res.sendStatus(404, "target playlist not found") return }
-        if not access.canAccess(target, actor(req), identity.roleOf(req)) { res.sendStatus(403, "target playlist access denied") return }
-
-        sendTrackWriteResult(res, target.id, playlists.moveTrack(source.id, trackId, target.id))
+        finishTrackWrite(res, service.moveTrack(paths.playlistId(req.path), trackId, body.targetPlaylistId, actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "DELETE", "/playlists/:playlistId/tracks/:trackId") {
-        let playlist = accessiblePlaylist(req, res)
-        if not playlist.found { return }
+        if not requireIdentity(req, res) { return }
 
         let trackId = safeTrackId(req, res)
         if text.isEmpty(trackId) { return }
 
-        sendTrackWriteResult(res, playlist.id, playlists.deleteTrack(playlist.id, trackId))
+        finishTrackWrite(res, service.deleteTrack(paths.playlistId(req.path), trackId, actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlists/:id") {
-        let playlist = accessiblePlaylist(req, res)
-        if not playlist.found { return }
-        res.sendText(200, presenter.playlist(playlist))
+        if not requireIdentity(req, res) { return }
+
+        let result = service.view(paths.playlistId(req.path), actor(req), identity.roleOf(req))
+        if not resolved(res, result) { return }
+        res.sendText(200, presenter.playlist(result.playlist))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "DELETE", "/playlists/:id") {
-        let playlist = accessiblePlaylist(req, res)
-        if not playlist.found { return }
+        if not requireIdentity(req, res) { return }
 
-        if playlists.remove(playlist.id) {
-            res.send(PlaylistMessage { ok: true, message: "deleted" })
-        } else {
-            res.sendStatus(500, "failed to delete playlist")
-        }
+        let result = service.remove(paths.playlistId(req.path), actor(req), identity.roleOf(req))
+        if result.status == "failed" { res.sendStatus(500, "failed to delete playlist") return }
+        if not resolved(res, result) { return }
+        res.send(PlaylistMessage { ok: true, message: "deleted" })
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlist/search") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.playlists(playlists.searchPlaylists(req.query("q"), actor(req), identity.roleOf(req))))
+        res.sendText(200, presenter.playlists(service.search(req.query("q"), actor(req), identity.roleOf(req))))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/music/search") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.musicHits(playlists.searchTracks(req.query("q"), actor(req), identity.roleOf(req))))
+        res.sendText(200, presenter.musicHits(service.searchTracks(req.query("q"), actor(req), identity.roleOf(req))))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
     }
 
-    // --- request guards: one place each for identity, access, and id checks ---
+    // --- HTTP guards & outcome mapping (no repository access lives here) ---
 
     // Ensures identity headers are present; writes 403 and returns false if not.
     producer requireIdentity(req: HttpRequest, res: HttpResponse) -> Bool {
         if identity.hasIdentity(req) { return true }
         res.sendStatus(403, "missing identity headers")
         return false
-    }
-
-    // Resolves the playlist named in the path and confirms the caller may touch
-    // it. On any failure it writes the response (403/404) and returns a
-    // not-found playlist so the handler can bail with `if not p.found { return }`.
-    producer accessiblePlaylist(req: HttpRequest, res: HttpResponse) -> Playlist {
-        if not identity.hasIdentity(req) {
-            res.sendStatus(403, "missing identity headers")
-            return noPlaylist()
-        }
-        let playlist = playlists.get(paths.playlistId(req.path))
-        if not playlist.found {
-            res.sendStatus(404, "playlist not found")
-            return noPlaylist()
-        }
-        if not access.canAccess(playlist, actor(req), identity.roleOf(req)) {
-            res.sendStatus(403, "playlist access denied")
-            return noPlaylist()
-        }
-        return playlist
     }
 
     // Extracts and validates the track id from the path; writes 400 and returns
@@ -151,18 +123,22 @@ class PlaylistApi implements WebRequestHandler {
         return ""
     }
 
-    mapper actor(req: HttpRequest) -> String => req.header("X-Username")
-
-    mapper noPlaylist() -> Playlist {
-        return Playlist { found: false, id: "", name: "", description: "", owner: "", tracks: empty List<Track> }
-    }
-
-    consumer sendTrackWriteResult(res: HttpResponse, id: String, result: String) {
-        if result == "updated" or result == "deleted" or result == "moved" {
-            res.sendText(200, presenter.playlist(playlists.get(id)))
-            return
-        }
-        if result == "not-found" { res.sendStatus(404, "track not found") return }
+    // Translates a non-"ok" service result to its HTTP error; returns true only
+    // when the caller may proceed.
+    producer resolved(res: HttpResponse, result: PlaylistResult) -> Bool {
+        if result.status == "ok" { return true }
+        if result.status == "not-found" { res.sendStatus(404, "playlist not found") return false }
+        if result.status == "denied" { res.sendStatus(403, "playlist access denied") return false }
+        if result.status == "track-not-found" { res.sendStatus(404, "track not found") return false }
+        if result.status == "target-not-found" { res.sendStatus(404, "target playlist not found") return false }
+        if result.status == "target-denied" { res.sendStatus(403, "target playlist access denied") return false }
         res.sendStatus(500, "failed to write track")
+        return false
     }
+
+    consumer finishTrackWrite(res: HttpResponse, result: PlaylistResult) {
+        if resolved(res, result) { res.sendText(200, presenter.playlist(result.playlist)) }
+    }
+
+    mapper actor(req: HttpRequest) -> String => req.header("X-Username")
 }
