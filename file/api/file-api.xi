@@ -13,12 +13,12 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
         res.sendText(200, fileListJson(files.list()))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
         let filePath = "music/" + newUuid()
         let result = files.create(filePath, req.body)
         if result == "created" {
@@ -29,7 +29,7 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "GET" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
 
         let filePath = paths.fromRequest(req)
         if not paths.isSafe(filePath) {
@@ -46,7 +46,7 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "POST" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
 
         let body = web.body(req) as FileWrite
         let result = files.create(paths.fromRequest(req), body.content)
@@ -54,7 +54,7 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "PUT" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
 
         let body = web.body(req) as FileWrite
         let result = files.update(paths.fromRequest(req), body.content)
@@ -62,7 +62,7 @@ class FileApi implements WebRequestHandler {
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "DELETE" {
-        if not identity.hasIdentity(req) { res.sendStatus(403, "missing identity headers") return }
+        if not requireIdentity(req, res) { return }
 
         let result = files.delete(paths.fromRequest(req))
         sendWriteResult(res, result, "delete")
@@ -70,6 +70,13 @@ class FileApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) {
         res.sendStatus(404, "Not Found")
+    }
+
+    // Ensures identity headers are present; writes 403 and returns false if not.
+    producer requireIdentity(req: HttpRequest, res: HttpResponse) -> Bool {
+        if identity.hasIdentity(req) { return true }
+        res.sendStatus(403, "missing identity headers")
+        return false
     }
 
     mapper newUuid() -> String {

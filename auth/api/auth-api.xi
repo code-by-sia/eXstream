@@ -71,10 +71,7 @@ class AuthApi implements WebRequestHandler {
 
     // Admin only: reset another user's password without the old one.
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/auth/admin/reset-password") {
-        if not isAdmin(req) {
-            res.sendStatus(403, "admin access required")
-            return
-        }
+        if not requireAdmin(req, res) { return }
         let body = web.body(req) as AdminResetRequest
         if text.isEmpty(body.username) or text.isEmpty(body.newPassword) {
             res.sendStatus(400, "username and new password are required")
@@ -91,19 +88,13 @@ class AuthApi implements WebRequestHandler {
 
     // Admin only: list every user (no password hashes).
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/admin/users") {
-        if not isAdmin(req) {
-            res.sendStatus(403, "admin access required")
-            return
-        }
+        if not requireAdmin(req, res) { return }
         res.sendText(200, usersJson(users.all()))
     }
 
     // Admin only: create a user with a chosen role.
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req,"POST", "/auth/admin/users")   {
-        if not isAdmin(req) {
-            res.sendStatus(403, "admin access required")
-            return
-        }
+        if not requireAdmin(req, res) { return }
         let body = web.body(req) as CreateUserRequest
         if text.isEmpty(body.username) or text.isEmpty(body.password) {
             res.sendStatus(400, "username and password are required")
@@ -163,6 +154,13 @@ class AuthApi implements WebRequestHandler {
     predicate isAdmin(req: HttpRequest) {
         let ctx = identity.context(req)
         return ctx.ok and ctx.role == "ADMIN"
+    }
+
+    // Confirms the caller is an admin; writes 403 and returns false if not.
+    producer requireAdmin(req: HttpRequest, res: HttpResponse) -> Bool {
+        if isAdmin(req) { return true }
+        res.sendStatus(403, "admin access required")
+        return false
     }
 
     mapper usersJson(records: List<UserRecord>) -> String {
