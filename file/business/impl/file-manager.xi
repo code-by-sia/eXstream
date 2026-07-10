@@ -14,7 +14,7 @@ class FileManager implements FileService {
     }
 
     producer store(content: String) -> StoredFile {
-        let filePath = "music/" + newUuid()
+        let filePath = $"music/${newUuid()}"
         if files.create(filePath, content) == "created" {
             return StoredFile { found: true, path: filePath, content: content }
         }
@@ -34,10 +34,6 @@ class FileManager implements FileService {
     }
 
     mapper newUuid() -> String {
-        return crypto.randomHex(4) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(2) + "-"
-            + crypto.randomHex(6)
+        return $"${crypto.randomHex(4)}-${crypto.randomHex(2)}-${crypto.randomHex(2)}-${crypto.randomHex(2)}-${crypto.randomHex(6)}"
     }
 }

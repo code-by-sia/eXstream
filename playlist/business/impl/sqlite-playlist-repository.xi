@@ -9,7 +9,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return missingPlaylist(id) }
         let db = opened.value
 
-        let rows = sql.query(db, "select id, name, description, owner from playlists where id = '" + sqlText.escape(id) + "'")
+        let rows = sql.query(db, $"select id, name, description, owner from playlists where id = '${sqlText.escape(id)}'")
         if isErr(rows) or rows.value.items.isEmpty() { sql.close(db) return missingPlaylist(id) }
 
         let playlist = playlistFromRow(rows.value.items.get(0), loadTracks(db, id))
@@ -22,9 +22,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
     }
 
     producer searchPlaylists(query: String, username: String, role: String) -> List<Playlist> {
-        let filter = ownerFilter("owner", username, role)
-            + " and (" + likeClause("name", query) + " or " + likeClause("description", query) + ")"
-        return queryPlaylists(filter)
+        let owned = ownerFilter("owner", username, role)
+        let byName = likeClause("name", query)
+        let byDescription = likeClause("description", query)
+        return queryPlaylists($"${owned} and (${byName} or ${byDescription})")
     }
 
     producer searchTracks(query: String, username: String, role: String) -> List<MusicHit> {
@@ -33,11 +34,9 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return hits }
         let db = opened.value
 
-        let rows = sql.query(db, "select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url "
-            + "from tracks t join playlists p on p.id = t.playlist_id "
-            + "where (" + ownerFilter("p.owner", username, role) + ") "
-            + "and (" + likeClause("t.title || ' ' || t.artist", query) + ") "
-            + "order by p.id, t.position, t.rowid")
+        let owned = ownerFilter("p.owner", username, role)
+        let matchClause = likeClause("t.title || ' ' || t.artist", query)
+        let rows = sql.query(db, $"select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url from tracks t join playlists p on p.id = t.playlist_id where (${owned}) and (${matchClause}) order by p.id, t.position, t.rowid")
         if isOk(rows) {
             for row in rows.value.items {
                 hits.push(MusicHit {
@@ -61,8 +60,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let db = opened.value
 
         let id = crypto.randomHex(8)
-        let written = sql.exec(db, "insert into playlists (id, name, description, owner) values ("
-            + "'" + sqlText.escape(id) + "', '" + sqlText.escape(name) + "', '" + sqlText.escape(description) + "', '" + sqlText.escape(owner) + "')")
+        let written = sql.exec(db, $"insert into playlists (id, name, description, owner) values ('${sqlText.escape(id)}', '${sqlText.escape(name)}', '${sqlText.escape(description)}', '${sqlText.escape(owner)}')")
         sql.close(db)
         if isErr(written) { return "" }
         return id
@@ -73,8 +71,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return false }
         let db = opened.value
 
-        let written = sql.exec(db, "delete from tracks where playlist_id = '" + sqlText.escape(id) + "';"
-            + "delete from playlists where id = '" + sqlText.escape(id) + "'")
+        let written = sql.exec(db, $"""
+            delete from tracks where playlist_id = '${sqlText.escape(id)}';
+            delete from playlists where id = '${sqlText.escape(id)}'
+            """)
         sql.close(db)
         return isOk(written)
     }
@@ -85,10 +85,13 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let db = opened.value
 
         let trackId = crypto.randomHex(8)
-        let written = sql.exec(db, "insert into tracks (id, playlist_id, title, artist, url, added_by, cover_url, position) values ("
-            + "'" + sqlText.escape(trackId) + "', '" + sqlText.escape(id) + "', '" + sqlText.escape(title) + "', '" + sqlText.escape(artist) + "', "
-            + "'" + sqlText.escape(url) + "', '" + sqlText.escape(addedBy) + "', '" + sqlText.escape(coverUrl) + "', "
-            + "(select count(*) from tracks where playlist_id = '" + sqlText.escape(id) + "'))")
+        let written = sql.exec(db, $"""
+            insert into tracks (id, playlist_id, title, artist, url, added_by, cover_url, position)
+            values (
+                '${sqlText.escape(trackId)}', '${sqlText.escape(id)}', '${sqlText.escape(title)}', '${sqlText.escape(artist)}',
+                '${sqlText.escape(url)}', '${sqlText.escape(addedBy)}', '${sqlText.escape(coverUrl)}',
+                (select count(*) from tracks where playlist_id = '${sqlText.escape(id)}'))
+            """)
         sql.close(db)
         if isErr(written) { return "" }
         return trackId
@@ -99,10 +102,12 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, "update tracks set "
-            + "title = '" + sqlText.escape(title) + "', artist = '" + sqlText.escape(artist) + "', "
-            + "url = '" + sqlText.escape(url) + "', cover_url = '" + sqlText.escape(coverUrl) + "' "
-            + "where id = '" + sqlText.escape(trackId) + "' and playlist_id = '" + sqlText.escape(id) + "'")
+        let written = sql.exec(db, $"""
+            update tracks set
+                title = '${sqlText.escape(title)}', artist = '${sqlText.escape(artist)}',
+                url = '${sqlText.escape(url)}', cover_url = '${sqlText.escape(coverUrl)}'
+            where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'
+            """)
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -115,7 +120,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, "delete from tracks where id = '" + sqlText.escape(trackId) + "' and playlist_id = '" + sqlText.escape(id) + "'")
+        let written = sql.exec(db, $"delete from tracks where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'")
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -131,10 +136,12 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, "update tracks set "
-            + "playlist_id = '" + sqlText.escape(targetId) + "', "
-            + "position = (select count(*) from tracks where playlist_id = '" + sqlText.escape(targetId) + "') "
-            + "where id = '" + sqlText.escape(trackId) + "' and playlist_id = '" + sqlText.escape(id) + "'")
+        let written = sql.exec(db, $"""
+            update tracks set
+                playlist_id = '${sqlText.escape(targetId)}',
+                position = (select count(*) from tracks where playlist_id = '${sqlText.escape(targetId)}')
+            where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'
+            """)
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -145,20 +152,22 @@ class SqlitePlaylistRepository implements PlaylistRepository {
     // Opens the playlist database and guarantees the schema exists.
     producer connect() -> sqlite.Database! {
         let db = sql.open(dbPaths.pathFor("playlists.db"))?
-        sql.exec(db, "create table if not exists playlists ("
-            + "id text primary key,"
-            + "name text not null,"
-            + "description text not null,"
-            + "owner text not null);"
-            + "create table if not exists tracks ("
-            + "id text primary key,"
-            + "playlist_id text not null,"
-            + "title text not null,"
-            + "artist text not null,"
-            + "url text not null,"
-            + "added_by text not null,"
-            + "cover_url text not null,"
-            + "position integer not null)")?
+        sql.exec(db, """
+            create table if not exists playlists (
+                id text primary key,
+                name text not null,
+                description text not null,
+                owner text not null);
+            create table if not exists tracks (
+                id text primary key,
+                playlist_id text not null,
+                title text not null,
+                artist text not null,
+                url text not null,
+                added_by text not null,
+                cover_url text not null,
+                position integer not null)
+            """)?
         return ok(db)
     }
 
@@ -170,7 +179,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return result }
         let db = opened.value
 
-        let rows = sql.query(db, "select id, name, description, owner from playlists where " + filter + " order by name")
+        let rows = sql.query(db, $"select id, name, description, owner from playlists where ${filter} order by name")
         if isErr(rows) { sql.close(db) return result }
 
         for row in rows.value.items {
@@ -182,8 +191,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
 
     producer loadTracks(db: sqlite.Database, playlistId: String) -> List<Track> {
         let tracks = empty List<Track>
-        let rows = sql.query(db, "select id, title, artist, url, added_by, cover_url from tracks "
-            + "where playlist_id = '" + sqlText.escape(playlistId) + "' order by position, rowid")
+        let rows = sql.query(db, $"select id, title, artist, url, added_by, cover_url from tracks where playlist_id = '${sqlText.escape(playlistId)}' order by position, rowid")
         if isOk(rows) {
             for row in rows.value.items {
                 tracks.push(Track {
@@ -214,12 +222,12 @@ class SqlitePlaylistRepository implements PlaylistRepository {
     // for an admin, otherwise only the caller's own.
     mapper ownerFilter(column: String, username: String, role: String) -> String {
         if role == "ADMIN" { return "1 = 1" }
-        return column + " = '" + sqlText.escape(username) + "'"
+        return $"${column} = '${sqlText.escape(username)}'"
     }
 
     mapper likeClause(column: String, query: String) -> String {
         if text.isEmpty(query) { return "1 = 1" }
-        return "lower(" + column + ") like '%" + sqlText.escape(text.toLower(query)) + "%'"
+        return $"lower(${column}) like '%${sqlText.escape(text.toLower(query))}%'"
     }
 
     mapper missingPlaylist(id: String) -> Playlist {

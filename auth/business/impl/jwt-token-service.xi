@@ -14,15 +14,15 @@ class JwtTokenService implements TokenService {
 
         let header = base64UrlText("{\"alg\":\"HS256\",\"typ\":\"JWT\"}")
         let payload = base64UrlText(json.stringify(claims))
-        let signingInput = header + "." + payload
-        return signingInput + "." + jwtSignature(signingInput)
+        let signingInput = $"${header}.${payload}"
+        return $"${signingInput}.${jwtSignature(signingInput)}"
     }
 
     mapper verify(token: String) -> AuthContext {
         let parts = text.split(token, ".")
         if parts.len != 3 { return AuthContext { ok: false, username: "", role: "" } }
 
-        let signingInput = parts.data[0] + "." + parts.data[1]
+        let signingInput = $"${parts.data[0]}.${parts.data[1]}"
         if jwtSignature(signingInput) != parts.data[2] {
             return AuthContext { ok: false, username: "", role: "" }
         }

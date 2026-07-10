@@ -8,8 +8,7 @@ class SqliteUserRepository implements UserRepository {
         if isErr(opened) { return emptyUser() }
         let db = opened.value
 
-        let rows = sql.query(db, "select username, password_hash, role, profile_name, email, avatar "
-            + "from users where username = '" + sqlText.escape(username) + "'")
+        let rows = sql.query(db, $"select username, password_hash, role, profile_name, email, avatar from users where username = '${sqlText.escape(username)}'")
         if isErr(rows) { sql.close(db) return emptyUser() }
         if rows.value.items.isEmpty() { sql.close(db) return emptyUser() }
 
@@ -56,19 +55,22 @@ class SqliteUserRepository implements UserRepository {
         if isErr(opened) { return false }
         let db = opened.value
 
-        let written = sql.exec(db, "insert into users (username, password_hash, role, profile_name, email, avatar) values ("
-            + "'" + sqlText.escape(username) + "',"
-            + "'" + sqlText.escape(crypto.sha256Hex(password)) + "',"
-            + "'" + sqlText.escape(role) + "',"
-            + "'" + sqlText.escape(profileName) + "',"
-            + "'" + sqlText.escape(email) + "',"
-            + "'" + sqlText.escape(avatar) + "') "
-            + "on conflict(username) do update set "
-            + "password_hash = excluded.password_hash, "
-            + "role = excluded.role, "
-            + "profile_name = excluded.profile_name, "
-            + "email = excluded.email, "
-            + "avatar = excluded.avatar")
+        let written = sql.exec(db, $"""
+            insert into users (username, password_hash, role, profile_name, email, avatar)
+            values (
+                '${sqlText.escape(username)}',
+                '${sqlText.escape(crypto.sha256Hex(password))}',
+                '${sqlText.escape(role)}',
+                '${sqlText.escape(profileName)}',
+                '${sqlText.escape(email)}',
+                '${sqlText.escape(avatar)}')
+            on conflict(username) do update set
+                password_hash = excluded.password_hash,
+                role = excluded.role,
+                profile_name = excluded.profile_name,
+                email = excluded.email,
+                avatar = excluded.avatar
+            """)
         sql.close(db)
         return isOk(written)
     }
@@ -77,13 +79,15 @@ class SqliteUserRepository implements UserRepository {
     // operation; the caller closes the returned connection.
     producer connect() -> sqlite.Database! {
         let db = sql.open(dbPaths.pathFor("auth.db"))?
-        sql.exec(db, "create table if not exists users ("
-            + "username text primary key,"
-            + "password_hash text not null,"
-            + "role text not null,"
-            + "profile_name text not null,"
-            + "email text not null,"
-            + "avatar text not null)")?
+        sql.exec(db, """
+            create table if not exists users (
+                username text primary key,
+                password_hash text not null,
+                role text not null,
+                profile_name text not null,
+                email text not null,
+                avatar text not null)
+            """)?
         return ok(db)
     }
 

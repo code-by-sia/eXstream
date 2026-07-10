@@ -11,7 +11,7 @@ class RequestPlaylistPaths implements PlaylistPaths {
     }
 
     mapper trackId(reqPath: String) -> String {
-        let prefix = "/playlists/" + playlistId(reqPath) + "/tracks/"
+        let prefix = $"/playlists/${playlistId(reqPath)}/tracks/"
         if not text.startsWith(reqPath, prefix) { return "" }
         let rest = text.substring(reqPath, text.length(prefix), text.length(reqPath))
         let slash = text.indexOf(rest, "/")

@@ -19,7 +19,7 @@ class FileApi implements WebRequestHandler {
         if not requireIdentity(req, res) { return }
         let stored = service.store(req.body)
         if not stored.found { res.sendStatus(500, "failed to upload file") return }
-        res.send(UploadResult { ok: true, path: stored.path, url: "/file/" + stored.path })
+        res.send(UploadResult { ok: true, path: stored.path, url: $"/file/${stored.path}" })
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where text.startsWith(req.path, "/file/") and req.method == "GET" {
@@ -78,6 +78,6 @@ class FileApi implements WebRequestHandler {
         if result == "already-exists" { res.sendStatus(409, "file already exists") return }
         if result == "not-found" { res.sendStatus(404, "file not found") return }
         if result == "invalid-path" { res.sendStatus(400, "file path must be a safe relative path") return }
-        res.sendStatus(500, "failed to " + operation + " file")
+        res.sendStatus(500, $"failed to ${operation} file")
     }
 }
