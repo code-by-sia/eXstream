@@ -1,6 +1,5 @@
-import "../business/playlists.xi"
-import "std/config.xi"
-import "std/text.xi"
+// Test blocks for the playlist service. Gathered and run via the root
+// playlist-test.xi module (`xi test playlist-test.xi`).
 
 test "guards playlist identifiers" (paths: PlaylistPaths) {
     assert paths.isSafeId("abc123")
@@ -17,15 +16,12 @@ test "checks playlist access" (access: PlaylistAccess) {
     assert not access.canAccess(playlist, "other", "USER")
 }
 
-test "serializes playlists with tracks" (presenter: PlaylistPresenter) {
-    let tracks = empty List<Track>
-    tracks.push(Track { id: "track1", title: "Song", artist: "Artist", url: "http://audio", addedBy: "sia", coverUrl: "data:image/png;base64,abc" })
-    let playlist = Playlist { found: true, id: "pl1", name: "Favorites", description: "Daily", owner: "sia", tracks: tracks }
-    let rendered = presenter.playlist(playlist)
-
-    assert text.contains(rendered, "\"name\":\"Favorites\"")
-    assert text.contains(rendered, "\"title\":\"Song\"")
-    assert text.contains(rendered, "\"coverUrl\":\"data:image/png;base64,abc\"")
+test "denies playlist access through the service" (service: PlaylistService) {
+    let id = service.create("Mine", "", "sia").id
+    assert id != ""
+    assert service.view(id, "sia", "USER").status == "ok"
+    assert service.view(id, "intruder", "USER").status == "denied"
+    assert service.view("nope", "sia", "USER").status == "not-found"
 }
 
 test "creates, updates, and deletes tracks through the repository" (repo: PlaylistRepository) {
@@ -46,8 +42,4 @@ test "creates, updates, and deletes tracks through the repository" (repo: Playli
 
     assert repo.remove(id)
     assert not repo.get(id).found
-}
-
-module App {
-    bind AppConfig -> readConfig("common/config.yaml")
 }

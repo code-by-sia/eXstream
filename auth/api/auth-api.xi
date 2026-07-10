@@ -1,4 +1,3 @@
-import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
@@ -71,7 +70,7 @@ class AuthApi implements WebRequestHandler {
     // Admin only: list every user (no password hashes).
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/auth/admin/users") {
         if not requireAdmin(req, res) { return }
-        res.sendText(200, usersJson(service.listUsers()))
+        res.send(usersResponse(service.listUsers()))
     }
 
     // Admin only: create a user with a chosen role.
@@ -145,19 +144,11 @@ class AuthApi implements WebRequestHandler {
         return false
     }
 
-    mapper usersJson(records: List<UserRecord>) -> String {
-        let arr = json.array()
+    mapper usersResponse(records: List<UserRecord>) -> UsersResponse {
+        let views = empty List<UserView>
         for user in records {
-            let obj = json.object()
-            obj = json.set(obj, "username", json.str(user.username))
-            obj = json.set(obj, "role", json.str(user.role))
-            obj = json.set(obj, "profileName", json.str(user.profileName))
-            obj = json.set(obj, "email", json.str(user.email))
-            obj = json.set(obj, "avatar", json.str(user.avatar))
-            arr = json.push(arr, obj)
+            views.push(UserView { username: user.username, role: user.role, profileName: user.profileName, email: user.email, avatar: user.avatar })
         }
-        let root = json.object()
-        root = json.set(root, "users", arr)
-        return json.stringify(root)
+        return UsersResponse { users: views }
     }
 }

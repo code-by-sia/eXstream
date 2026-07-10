@@ -15,7 +15,7 @@ ENV PATH="/home/linuxbrew/xi/bin:${PATH}"
 
 # Install the Xi toolchain straight from the GitHub release. The Homebrew
 # formula lags behind, so pin (and bump) the version here instead.
-ARG XI_VERSION=0.0.91
+ARG XI_VERSION=0.0.95
 RUN arch="$(uname -m)" \
     && case "$arch" in \
          aarch64|arm64) asset="linux-arm64" ;; \
@@ -29,7 +29,8 @@ RUN arch="$(uname -m)" \
 COPY --chown=linuxbrew:linuxbrew common ./common
 COPY --chown=linuxbrew:linuxbrew vendor ./vendor
 COPY --chown=linuxbrew:linuxbrew playlist ./playlist
-RUN xc playlist/playlist-service.xi
+COPY --chown=linuxbrew:linuxbrew playlist-service.xi ./
+RUN xc playlist-service.xi
 
 FROM ubuntu:24.04 AS runtime
 

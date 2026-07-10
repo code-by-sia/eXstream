@@ -3,10 +3,10 @@
 // persistence orchestration live in one place behind the HTTP layer.
 // Implemented by PlaylistManager.
 //
-// Single-playlist operations return a PlaylistResult whose `status` the caller
-// maps to an HTTP response: "ok" | "not-found" | "denied" | "track-not-found" |
-// "target-not-found" | "target-denied" | "failed".
-type PlaylistResult = { status: String, playlist: Playlist }
+// Single-playlist operations return a PlaylistResult (defined alongside Playlist
+// in playlist-records.xi) whose `status` the caller maps to an HTTP response:
+// "ok" | "not-found" | "denied" | "track-not-found" | "target-not-found" |
+// "target-denied" | "failed".
 
 interface PlaylistService {
     producer listFor(username: String, role: String) -> List<Playlist>

@@ -1,5 +1,5 @@
-import "../business/auth.xi"
-import "std/config.xi"
+// Test blocks for the auth service. Gathered and run via the root auth-test.xi
+// module (`xi test auth-test.xi`).
 
 test "issues and verifies a user token" (tokens: TokenService) {
     let token = tokens.issue("test", "USER")
@@ -18,8 +18,4 @@ test "rejects a tampered token" (tokens: TokenService) {
 test "normalizes unknown roles to user" (identity: AuthIdentity) {
     assert identity.cleanRole("ADMIN") == "ADMIN"
     assert identity.cleanRole("anything") == "USER"
-}
-
-module App {
-    bind AppConfig -> readConfig("common/config.yaml")
 }

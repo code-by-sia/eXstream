@@ -1,5 +1,4 @@
-import "../business/files.xi"
-import "std/config.xi"
+// More test blocks for the file service (gathered via the root file-test.xi).
 
 test "creates and reads stored files" (repo: FileRepository) {
     let filePath = "test/codex-repository.txt"
@@ -15,8 +14,4 @@ test "creates and reads stored files" (repo: FileRepository) {
 
     assert repo.delete(filePath) == "deleted"
     assert not repo.get(filePath).found
-}
-
-module App {
-    bind AppConfig -> readConfig("common/config.yaml")
 }

@@ -1,4 +1,3 @@
-import "std/json.xi"
 import "std/text.xi"
 import "std/web.xi"
 
@@ -13,7 +12,7 @@ class FileApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/files" and req.method == "GET" {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, fileListJson(service.list()))
+        res.send(FileListing { files: service.list() })
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where req.path == "/file" and req.method == "POST" {
@@ -69,14 +68,6 @@ class FileApi implements WebRequestHandler {
         if identity.hasIdentity(req) { return true }
         res.sendStatus(403, "missing identity headers")
         return false
-    }
-
-    mapper fileListJson(filePaths: List<String>) -> String {
-        let arr = json.array()
-        for p in filePaths { arr = json.push(arr, json.str(p)) }
-        let root = json.object()
-        root = json.set(root, "files", arr)
-        return json.stringify(root)
     }
 
     consumer sendWriteResult(res: HttpResponse, result: String, operation: String) {

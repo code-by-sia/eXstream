@@ -6,7 +6,8 @@
 // `status` values the caller maps to HTTP: "ok" | "invalid-credentials" |
 // "exists" | "not-found" | "wrong-password" | "failed". On "ok", `user` is the
 // affected record and `token` is set for register/login (empty otherwise).
-type AuthOutcome = { status: String, user: UserRecord, token: String }
+// AuthOutcome is defined alongside UserRecord in user-repository.xi (it embeds
+// it by value, which must be gathered in the same file for C emission).
 
 interface AuthService {
     producer registerUser(username: String, password: String, profileName: String, email: String, avatar: String) -> AuthOutcome

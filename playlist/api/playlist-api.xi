@@ -5,7 +5,6 @@ class PlaylistApi implements WebRequestHandler {
     deps {
         service: PlaylistService
         identity: AuthIdentity
-        presenter: PlaylistPresenter
         paths: PlaylistPaths
     }
 
@@ -17,7 +16,7 @@ class PlaylistApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlists") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.playlists(service.listFor(actor(req), identity.roleOf(req))))
+        res.send(service.listFor(actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists") {
@@ -28,7 +27,7 @@ class PlaylistApi implements WebRequestHandler {
 
         let created = service.create(body.name, body.description, actor(req))
         if not created.found { res.sendStatus(500, "failed to create playlist") return }
-        res.sendText(200, presenter.playlist(created))
+        res.send(created)
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "POST", "/playlists/:playlistId/tracks") {
@@ -40,7 +39,7 @@ class PlaylistApi implements WebRequestHandler {
         let result = service.addTrack(paths.playlistId(req.path), body.title, body.artist, body.url, actor(req), identity.roleOf(req), body.coverUrl)
         if result.status == "failed" { res.sendStatus(500, "failed to add track") return }
         if not resolved(res, result) { return }
-        res.sendText(200, presenter.playlist(result.playlist))
+        res.send(result.playlist)
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "PUT", "/playlists/:playlistId/tracks") {
@@ -79,7 +78,7 @@ class PlaylistApi implements WebRequestHandler {
 
         let result = service.view(paths.playlistId(req.path), actor(req), identity.roleOf(req))
         if not resolved(res, result) { return }
-        res.sendText(200, presenter.playlist(result.playlist))
+        res.send(result.playlist)
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "DELETE", "/playlists/:id") {
@@ -93,12 +92,12 @@ class PlaylistApi implements WebRequestHandler {
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/playlist/search") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.playlists(service.search(req.query("q"), actor(req), identity.roleOf(req))))
+        res.send(service.search(req.query("q"), actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) where web.route(req, "GET", "/music/search") {
         if not requireIdentity(req, res) { return }
-        res.sendText(200, presenter.musicHits(service.searchTracks(req.query("q"), actor(req), identity.roleOf(req))))
+        res.send(service.searchTracks(req.query("q"), actor(req), identity.roleOf(req)))
     }
 
     action handle(req: HttpRequest, res: HttpResponse) {
@@ -137,7 +136,7 @@ class PlaylistApi implements WebRequestHandler {
     }
 
     consumer finishTrackWrite(res: HttpResponse, result: PlaylistResult) {
-        if resolved(res, result) { res.sendText(200, presenter.playlist(result.playlist)) }
+        if resolved(res, result) { res.send(result.playlist) }
     }
 
     mapper actor(req: HttpRequest) -> String => req.header("X-Username")
