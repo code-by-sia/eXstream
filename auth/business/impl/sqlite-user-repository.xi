@@ -15,7 +15,9 @@ class SqliteUserRepository implements UserRepository {
         let db = opened.value
 
         binder.useDatabase(db)
-        let rows = query.from<UserRow>("users").filter { it.username == username }.collect(provider)
+        let rows = query.from<UserRow>("users")
+            .filter { it.username == username }
+            .collect(provider)
         sql.close(db)
 
         if rows.isEmpty() { return emptyUser() }
@@ -29,7 +31,9 @@ class SqliteUserRepository implements UserRepository {
         let db = opened.value
 
         binder.useDatabase(db)
-        let rows = query.from<UserRow>("users").sortedBy { it.username }.collect(provider)
+        let rows = query.from<UserRow>("users")
+            .sortedBy { it.username }
+            .collect(provider)
         for row in rows { users.push(fromRow(row)) }
         sql.close(db)
         return users

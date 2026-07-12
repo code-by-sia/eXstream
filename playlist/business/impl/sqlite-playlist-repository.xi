@@ -17,7 +17,9 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let db = opened.value
 
         binder.useDatabase(db)
-        let rows = query.from<PlaylistRow>("playlists").filter { it.id == id }.collect(provider)
+        let rows = query.from<PlaylistRow>("playlists")
+            .filter { it.id == id }
+            .collect(provider)
         if rows.isEmpty() { sql.close(db) return missingPlaylist(id) }
 
         let playlist = playlistFromRow(rows.get(0), loadTracks(db, id))
@@ -36,9 +38,14 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         binder.useDatabase(db)
         let rows = empty List<PlaylistRow>
         if role == "ADMIN" {
-            rows = query.from<PlaylistRow>("playlists").sortedBy { it.name }.collect(provider)
+            rows = query.from<PlaylistRow>("playlists")
+                .sortedBy { it.name }
+                .collect(provider)
         } else {
-            rows = query.from<PlaylistRow>("playlists").filter { it.owner == username }.sortedBy { it.name }.collect(provider)
+            rows = query.from<PlaylistRow>("playlists")
+                .filter { it.owner == username }
+                .sortedBy { it.name }
+                .collect(provider)
         }
         for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
         sql.close(db)
@@ -57,11 +64,13 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if role == "ADMIN" {
             rows = query.from<PlaylistRow>("playlists")
                 .filter { it.name.lowercase().contains(needle) or it.description.lowercase().contains(needle) }
-                .sortedBy { it.name }.collect(provider)
+                .sortedBy { it.name }
+                .collect(provider)
         } else {
             rows = query.from<PlaylistRow>("playlists")
                 .filter { it.owner == username and (it.name.lowercase().contains(needle) or it.description.lowercase().contains(needle)) }
-                .sortedBy { it.name }.collect(provider)
+                .sortedBy { it.name }
+                .collect(provider)
         }
         for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
         sql.close(db)
@@ -225,7 +234,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
     // A typed chain over `tracks` for one playlist, ordered by stored position.
     producer loadTracks(db: sqlite.Database, playlistId: String) -> List<Track> {
         binder.useDatabase(db)
-        let rows = query.from<TrackRow>("tracks").filter { it.playlist_id == playlistId }.sortedBy { it.position }.collect(provider)
+        let rows = query.from<TrackRow>("tracks")
+            .filter { it.playlist_id == playlistId }
+            .sortedBy { it.position }
+            .collect(provider)
         let tracks = empty List<Track>
         for row in rows { tracks.push(trackFromRow(row)) }
         return tracks
