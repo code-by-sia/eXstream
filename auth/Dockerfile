@@ -15,7 +15,7 @@ ENV PATH="/home/linuxbrew/xi/bin:${PATH}"
 
 # Install the Xi toolchain straight from the GitHub release. The Homebrew
 # formula lags behind, so pin (and bump) the version here instead.
-ARG XI_VERSION=0.0.95
+ARG XI_VERSION=0.0.98
 RUN arch="$(uname -m)" \
     && case "$arch" in \
          aarch64|arm64) asset="linux-arm64" ;; \
@@ -27,10 +27,10 @@ RUN arch="$(uname -m)" \
        | tar xz -C /home/linuxbrew/xi --strip-components=1
 
 COPY --chown=linuxbrew:linuxbrew common ./common
-COPY --chown=linuxbrew:linuxbrew vendor ./vendor
 COPY --chown=linuxbrew:linuxbrew auth ./auth
 COPY --chown=linuxbrew:linuxbrew auth-service.xi ./
-RUN xc auth-service.xi
+# Fetch the xi-sqlite dependency into ./modules, then build.
+RUN xi install auth-service.xi && xc auth-service.xi
 
 FROM ubuntu:24.04 AS runtime
 

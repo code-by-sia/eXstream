@@ -1,29 +1,25 @@
 import "std/crypto.xi"
+import "std/json.xi"
+import "std/query.xi"
+
+// Flat row matching the `users` table columns (field names == column names) so
+// the QueryProvider can hydrate it directly.
+type UserRow = { username: String, password_hash: String, role: String, profile_name: String, email: String, avatar: String }
 
 class SqliteUserRepository implements UserRepository {
-    deps { sql: sqlite.SQLite, reader: sqlite.RowReader, sqlText: SqlText, dbPaths: DatabasePaths }
+    deps { sql: sqlite.SQLite, dbPaths: DatabasePaths, provider: QueryProvider, binder: DatabaseBinder }
 
     producer find(username: String) -> UserRecord {
         let opened = connect()
         if isErr(opened) { return emptyUser() }
         let db = opened.value
 
-        let rows = sql.query(db, $"select username, password_hash, role, profile_name, email, avatar from users where username = '${sqlText.escape(username)}'")
-        if isErr(rows) { sql.close(db) return emptyUser() }
-        if rows.value.items.isEmpty() { sql.close(db) return emptyUser() }
-
-        let row = rows.value.items.get(0)
-        let record = UserRecord {
-            found: true,
-            username: reader.textAt(row, "username", ""),
-            passwordHash: reader.textAt(row, "password_hash", ""),
-            role: reader.textAt(row, "role", "USER"),
-            profileName: reader.textAt(row, "profile_name", ""),
-            email: reader.textAt(row, "email", ""),
-            avatar: reader.textAt(row, "avatar", "")
-        }
+        binder.useDatabase(db)
+        let rows = query.from<UserRow>("users").filter { it.username == username }.collect(provider)
         sql.close(db)
-        return record
+
+        if rows.isEmpty() { return emptyUser() }
+        return fromRow(rows.get(0))
     }
 
     producer all() -> List<UserRecord> {
@@ -32,20 +28,9 @@ class SqliteUserRepository implements UserRepository {
         if isErr(opened) { return users }
         let db = opened.value
 
-        let rows = sql.query(db, "select username, password_hash, role, profile_name, email, avatar from users order by username")
-        if isOk(rows) {
-            for row in rows.value.items {
-                users.push(UserRecord {
-                    found: true,
-                    username: reader.textAt(row, "username", ""),
-                    passwordHash: reader.textAt(row, "password_hash", ""),
-                    role: reader.textAt(row, "role", "USER"),
-                    profileName: reader.textAt(row, "profile_name", ""),
-                    email: reader.textAt(row, "email", ""),
-                    avatar: reader.textAt(row, "avatar", "")
-                })
-            }
-        }
+        binder.useDatabase(db)
+        let rows = query.from<UserRow>("users").sortedBy { it.username }.collect(provider)
+        for row in rows { users.push(fromRow(row)) }
         sql.close(db)
         return users
     }
@@ -55,22 +40,24 @@ class SqliteUserRepository implements UserRepository {
         if isErr(opened) { return false }
         let db = opened.value
 
-        let written = sql.exec(db, $"""
+        let params = json.array()
+        params = json.push(params, json.str(username))
+        params = json.push(params, json.str(crypto.sha256Hex(password)))
+        params = json.push(params, json.str(role))
+        params = json.push(params, json.str(profileName))
+        params = json.push(params, json.str(email))
+        params = json.push(params, json.str(avatar))
+
+        let written = sql.execBound(db, """
             insert into users (username, password_hash, role, profile_name, email, avatar)
-            values (
-                '${sqlText.escape(username)}',
-                '${sqlText.escape(crypto.sha256Hex(password))}',
-                '${sqlText.escape(role)}',
-                '${sqlText.escape(profileName)}',
-                '${sqlText.escape(email)}',
-                '${sqlText.escape(avatar)}')
+            values (?, ?, ?, ?, ?, ?)
             on conflict(username) do update set
                 password_hash = excluded.password_hash,
                 role = excluded.role,
                 profile_name = excluded.profile_name,
                 email = excluded.email,
                 avatar = excluded.avatar
-            """)
+            """, params)
         sql.close(db)
         return isOk(written)
     }
@@ -89,6 +76,18 @@ class SqliteUserRepository implements UserRepository {
                 avatar text not null)
             """)?
         return ok(db)
+    }
+
+    mapper fromRow(row: UserRow) -> UserRecord {
+        return UserRecord {
+            found: true,
+            username: row.username,
+            passwordHash: row.password_hash,
+            role: row.role,
+            profileName: row.profile_name,
+            email: row.email,
+            avatar: row.avatar
+        }
     }
 
     mapper emptyUser() -> UserRecord {

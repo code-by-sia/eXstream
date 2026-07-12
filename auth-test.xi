@@ -6,6 +6,9 @@ import "std/config.xi"
 // includes globs don't traverse up with `../`.)
 module App {
     id = "auth-test"
-    includes = ["auth/**", "common/**", "vendor/sqlite.xi"]
+    includes = ["auth/**", "common/**"]
+    dependencies = ["https://github.com/code-by-sia/xi-sqlite/archive/refs/tags/v0.2.0.tar.gz"]
     bind AppConfig -> readConfig("common/config.yaml")
+    bind QueryProvider  -> SqliteQueryProvider as singleton
+    bind DatabaseBinder -> SqliteQueryProvider as singleton
 }

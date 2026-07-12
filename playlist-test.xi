@@ -4,6 +4,9 @@ import "std/config.xi"
 // test/ folder by glob; `xi test playlist-test.xi` runs every gathered test.
 module App {
     id = "playlist-test"
-    includes = ["playlist/**", "common/**", "vendor/sqlite.xi"]
+    includes = ["playlist/**", "common/**"]
+    dependencies = ["https://github.com/code-by-sia/xi-sqlite/archive/refs/tags/v0.2.0.tar.gz"]
     bind AppConfig -> readConfig("common/config.yaml")
+    bind QueryProvider  -> SqliteQueryProvider as singleton
+    bind DatabaseBinder -> SqliteQueryProvider as singleton
 }

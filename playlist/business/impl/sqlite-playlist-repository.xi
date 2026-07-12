@@ -1,42 +1,100 @@
 import "std/crypto.xi"
+import "std/json.xi"
+import "std/query.xi"
 import "std/text.xi"
 
+// Flat rows matching the table columns so the QueryProvider can hydrate them
+// directly (field names == column names).
+type PlaylistRow = { id: String, name: String, description: String, owner: String }
+type TrackRow = { id: String, playlist_id: String, title: String, artist: String, url: String, added_by: String, cover_url: String, position: Integer }
+
 class SqlitePlaylistRepository implements PlaylistRepository {
-    deps { sql: sqlite.SQLite, reader: sqlite.RowReader, sqlText: SqlText, dbPaths: DatabasePaths }
+    deps { sql: sqlite.SQLite, reader: sqlite.RowReader, dbPaths: DatabasePaths, provider: QueryProvider, binder: DatabaseBinder }
 
     producer get(id: String) -> Playlist {
         let opened = connect()
         if isErr(opened) { return missingPlaylist(id) }
         let db = opened.value
 
-        let rows = sql.query(db, $"select id, name, description, owner from playlists where id = '${sqlText.escape(id)}'")
-        if isErr(rows) or rows.value.items.isEmpty() { sql.close(db) return missingPlaylist(id) }
+        binder.useDatabase(db)
+        let rows = query.from<PlaylistRow>("playlists").filter { it.id == id }.collect(provider)
+        if rows.isEmpty() { sql.close(db) return missingPlaylist(id) }
 
-        let playlist = playlistFromRow(rows.value.items.get(0), loadTracks(db, id))
+        let playlist = playlistFromRow(rows.get(0), loadTracks(db, id))
         sql.close(db)
         return playlist
     }
 
+    // A typed chain over `playlists`, restricted to the caller's own rows unless
+    // they are an admin.
     producer listForUser(username: String, role: String) -> List<Playlist> {
-        return queryPlaylists(ownerFilter("owner", username, role))
+        let result = empty List<Playlist>
+        let opened = connect()
+        if isErr(opened) { return result }
+        let db = opened.value
+
+        binder.useDatabase(db)
+        let rows = empty List<PlaylistRow>
+        if role == "ADMIN" {
+            rows = query.from<PlaylistRow>("playlists").sortedBy { it.name }.collect(provider)
+        } else {
+            rows = query.from<PlaylistRow>("playlists").filter { it.owner == username }.sortedBy { it.name }.collect(provider)
+        }
+        for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
+        sql.close(db)
+        return result
     }
 
-    producer searchPlaylists(query: String, username: String, role: String) -> List<Playlist> {
-        let owned = ownerFilter("owner", username, role)
-        let byName = likeClause("name", query)
-        let byDescription = likeClause("description", query)
-        return queryPlaylists($"${owned} and (${byName} or ${byDescription})")
+    producer searchPlaylists(term: String, username: String, role: String) -> List<Playlist> {
+        let result = empty List<Playlist>
+        let opened = connect()
+        if isErr(opened) { return result }
+        let db = opened.value
+
+        binder.useDatabase(db)
+        let needle = text.toLower(term)
+        let rows = empty List<PlaylistRow>
+        if role == "ADMIN" {
+            rows = query.from<PlaylistRow>("playlists")
+                .filter { it.name.lowercase().contains(needle) or it.description.lowercase().contains(needle) }
+                .sortedBy { it.name }.collect(provider)
+        } else {
+            rows = query.from<PlaylistRow>("playlists")
+                .filter { it.owner == username and (it.name.lowercase().contains(needle) or it.description.lowercase().contains(needle)) }
+                .sortedBy { it.name }.collect(provider)
+        }
+        for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
+        sql.close(db)
+        return result
     }
 
-    producer searchTracks(query: String, username: String, role: String) -> List<MusicHit> {
+    // Cross-table search (tracks joined to their playlist for the owner check);
+    // the single-table QueryProvider can't express the join, so this one stays a
+    // parameterized queryBound.
+    producer searchTracks(term: String, username: String, role: String) -> List<MusicHit> {
         let hits = empty List<MusicHit>
         let opened = connect()
         if isErr(opened) { return hits }
         let db = opened.value
 
-        let owned = ownerFilter("p.owner", username, role)
-        let matchClause = likeClause("t.title || ' ' || t.artist", query)
-        let rows = sql.query(db, $"select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url from tracks t join playlists p on p.id = t.playlist_id where (${owned}) and (${matchClause}) order by p.id, t.position, t.rowid")
+        let like = wildcard(term)
+        let sqlStr = """
+            select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url
+            from tracks t join playlists p on p.id = t.playlist_id
+            where p.owner = ? and lower(t.title || ' ' || t.artist) like ?
+            order by p.id, t.position, t.rowid
+            """
+        let params = strParams(listOf(username, like))
+        if role == "ADMIN" {
+            sqlStr = """
+                select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url
+                from tracks t join playlists p on p.id = t.playlist_id
+                where lower(t.title || ' ' || t.artist) like ?
+                order by p.id, t.position, t.rowid
+                """
+            params = strParams(listOf(like))
+        }
+        let rows = sql.queryBound(db, sqlStr, params)
         if isOk(rows) {
             for row in rows.value.items {
                 hits.push(MusicHit {
@@ -60,7 +118,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let db = opened.value
 
         let id = crypto.randomHex(8)
-        let written = sql.exec(db, $"insert into playlists (id, name, description, owner) values ('${sqlText.escape(id)}', '${sqlText.escape(name)}', '${sqlText.escape(description)}', '${sqlText.escape(owner)}')")
+        let written = sql.execBound(db, "insert into playlists (id, name, description, owner) values (?, ?, ?, ?)", strParams(listOf(id, name, description, owner)))
         sql.close(db)
         if isErr(written) { return "" }
         return id
@@ -71,12 +129,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return false }
         let db = opened.value
 
-        let written = sql.exec(db, $"""
-            delete from tracks where playlist_id = '${sqlText.escape(id)}';
-            delete from playlists where id = '${sqlText.escape(id)}'
-            """)
+        let clearedTracks = sql.execBound(db, "delete from tracks where playlist_id = ?", strParams(listOf(id)))
+        let removedPlaylist = sql.execBound(db, "delete from playlists where id = ?", strParams(listOf(id)))
         sql.close(db)
-        return isOk(written)
+        return isOk(clearedTracks) and isOk(removedPlaylist)
     }
 
     producer addTrack(id: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String) -> String {
@@ -85,13 +141,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let db = opened.value
 
         let trackId = crypto.randomHex(8)
-        let written = sql.exec(db, $"""
+        let written = sql.execBound(db, """
             insert into tracks (id, playlist_id, title, artist, url, added_by, cover_url, position)
-            values (
-                '${sqlText.escape(trackId)}', '${sqlText.escape(id)}', '${sqlText.escape(title)}', '${sqlText.escape(artist)}',
-                '${sqlText.escape(url)}', '${sqlText.escape(addedBy)}', '${sqlText.escape(coverUrl)}',
-                (select count(*) from tracks where playlist_id = '${sqlText.escape(id)}'))
-            """)
+            values (?, ?, ?, ?, ?, ?, ?, (select count(*) from tracks where playlist_id = ?))
+            """, strParams(listOf(trackId, id, title, artist, url, addedBy, coverUrl, id)))
         sql.close(db)
         if isErr(written) { return "" }
         return trackId
@@ -102,12 +155,10 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, $"""
-            update tracks set
-                title = '${sqlText.escape(title)}', artist = '${sqlText.escape(artist)}',
-                url = '${sqlText.escape(url)}', cover_url = '${sqlText.escape(coverUrl)}'
-            where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'
-            """)
+        let written = sql.execBound(db, """
+            update tracks set title = ?, artist = ?, url = ?, cover_url = ?
+            where id = ? and playlist_id = ?
+            """, strParams(listOf(title, artist, url, coverUrl, trackId, id)))
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -120,7 +171,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, $"delete from tracks where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'")
+        let written = sql.execBound(db, "delete from tracks where id = ? and playlist_id = ?", strParams(listOf(trackId, id)))
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -136,12 +187,12 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
 
-        let written = sql.exec(db, $"""
+        let written = sql.execBound(db, """
             update tracks set
-                playlist_id = '${sqlText.escape(targetId)}',
-                position = (select count(*) from tracks where playlist_id = '${sqlText.escape(targetId)}')
-            where id = '${sqlText.escape(trackId)}' and playlist_id = '${sqlText.escape(id)}'
-            """)
+                playlist_id = ?,
+                position = (select count(*) from tracks where playlist_id = ?)
+            where id = ? and playlist_id = ?
+            """, strParams(listOf(targetId, targetId, trackId, id)))
         if isErr(written) { sql.close(db) return "storage-failed" }
         let changed = sql.changes(db)
         sql.close(db)
@@ -171,63 +222,33 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         return ok(db)
     }
 
-    // Shared read path for list/search: selects playlist rows matching `filter`
-    // and hydrates each with its tracks.
-    producer queryPlaylists(filter: String) -> List<Playlist> {
-        let result = empty List<Playlist>
-        let opened = connect()
-        if isErr(opened) { return result }
-        let db = opened.value
-
-        let rows = sql.query(db, $"select id, name, description, owner from playlists where ${filter} order by name")
-        if isErr(rows) { sql.close(db) return result }
-
-        for row in rows.value.items {
-            result.push(playlistFromRow(row, loadTracks(db, reader.textAt(row, "id", ""))))
-        }
-        sql.close(db)
-        return result
-    }
-
+    // A typed chain over `tracks` for one playlist, ordered by stored position.
     producer loadTracks(db: sqlite.Database, playlistId: String) -> List<Track> {
+        binder.useDatabase(db)
+        let rows = query.from<TrackRow>("tracks").filter { it.playlist_id == playlistId }.sortedBy { it.position }.collect(provider)
         let tracks = empty List<Track>
-        let rows = sql.query(db, $"select id, title, artist, url, added_by, cover_url from tracks where playlist_id = '${sqlText.escape(playlistId)}' order by position, rowid")
-        if isOk(rows) {
-            for row in rows.value.items {
-                tracks.push(Track {
-                    id: reader.textAt(row, "id", ""),
-                    title: reader.textAt(row, "title", ""),
-                    artist: reader.textAt(row, "artist", ""),
-                    url: reader.textAt(row, "url", ""),
-                    addedBy: reader.textAt(row, "added_by", ""),
-                    coverUrl: reader.textAt(row, "cover_url", "")
-                })
-            }
-        }
+        for row in rows { tracks.push(trackFromRow(row)) }
         return tracks
     }
 
-    producer playlistFromRow(row: sqlite.Row, tracks: List<Track>) -> Playlist {
-        return Playlist {
-            found: true,
-            id: reader.textAt(row, "id", ""),
-            name: reader.textAt(row, "name", ""),
-            description: reader.textAt(row, "description", ""),
-            owner: reader.textAt(row, "owner", ""),
-            tracks: tracks
-        }
+    mapper playlistFromRow(row: PlaylistRow, tracks: List<Track>) -> Playlist {
+        return Playlist { found: true, id: row.id, name: row.name, description: row.description, owner: row.owner, tracks: tracks }
     }
 
-    // SQL predicate restricting rows to playlists the caller may see: any row
-    // for an admin, otherwise only the caller's own.
-    mapper ownerFilter(column: String, username: String, role: String) -> String {
-        if role == "ADMIN" { return "1 = 1" }
-        return $"${column} = '${sqlText.escape(username)}'"
+    mapper trackFromRow(row: TrackRow) -> Track {
+        return Track { id: row.id, title: row.title, artist: row.artist, url: row.url, addedBy: row.added_by, coverUrl: row.cover_url }
     }
 
-    mapper likeClause(column: String, query: String) -> String {
-        if text.isEmpty(query) { return "1 = 1" }
-        return $"lower(${column}) like '%${sqlText.escape(text.toLower(query))}%'"
+    // Builds a positional-parameter array of text values for a bound statement.
+    producer strParams(items: List<String>) -> Json {
+        let arr = json.array()
+        for item in items { arr = json.push(arr, json.str(item)) }
+        return arr
+    }
+
+    // A case-insensitive LIKE pattern; empty term becomes "%%" (matches all).
+    mapper wildcard(term: String) -> String {
+        return "%" + text.toLower(term) + "%"
     }
 
     mapper missingPlaylist(id: String) -> Playlist {
