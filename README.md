@@ -72,9 +72,9 @@ The `auth` and `playlist` services persist to SQLite (`auth.db`, `playlists.db` 
 docker compose up --build
 ```
 
-The Xi service images download a pinned Xi toolchain release (`XI_VERSION` build
-arg) from GitHub and run `xi install` to fetch the xi-sqlite dependency during
-the build — no Homebrew tap or SSH auth required.
+The Xi service images install the Xi toolchain with `brew install
+code-by-sia/xi/xi` (the tap tracks the latest release) and run `xi install` to
+fetch the xi-sqlite dependency during the build.
 
 - Web UI: http://localhost:7001
 - API gateway: http://localhost:8080
