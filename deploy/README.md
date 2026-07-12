@@ -47,9 +47,9 @@ docker push $REGISTRY/exstream-web:latest
 ```
 
 The `web` build uses the Dockerfile's default (production) target: Vite build
-served by nginx. The Xi service images install the Xi toolchain via Homebrew —
-if the `code-by-sia/x` tap is private, make sure Docker has GitHub SSH auth
-(see the root README).
+served by nginx. The Xi service images download a pinned Xi toolchain release
+(`XI_VERSION` build arg) from GitHub and run `xi install` to fetch the xi-sqlite
+dependency during the build — no Homebrew tap or GitHub SSH auth needed.
 
 For local clusters you can skip the registry: `kind load docker-image …` or
 `k3s ctr images import …` after building.
