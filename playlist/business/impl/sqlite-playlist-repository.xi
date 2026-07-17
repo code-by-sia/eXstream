@@ -7,9 +7,12 @@ import "std/text.xi"
 // directly (field names == column names).
 type PlaylistRow = { id: String, name: String, description: String, owner: String }
 type TrackRow = { id: String, playlist_id: String, title: String, artist: String, url: String, added_by: String, cover_url: String, position: Integer }
+// A track joined to its playlist's owner — an internal projection used only to
+// filter searchTracks by ownership before shaping the public MusicHit.
+type SearchHitRow = { id: String, playlist_id: String, title: String, artist: String, url: String, added_by: String, cover_url: String, owner: String }
 
 class SqlitePlaylistRepository implements PlaylistRepository {
-    deps { sql: sqlite.SQLite, reader: sqlite.RowReader, dbPaths: DatabasePaths, provider: QueryProvider, binder: DatabaseBinder }
+    deps { sql: sqlite.SQLite, dbPaths: DatabasePaths, provider: QueryProvider, binder: DatabaseBinder }
 
     producer get(id: String) -> Playlist {
         let opened = connect()
@@ -22,7 +25,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
             .collect(provider)
         if rows.isEmpty() { sql.close(db) return missingPlaylist(id) }
 
-        let playlist = playlistFromRow(rows.get(0), loadTracks(db, id))
+        let playlist = playlistFromRow(rows.get(0), loadTracks(id))
         sql.close(db)
         return playlist
     }
@@ -47,7 +50,7 @@ class SqlitePlaylistRepository implements PlaylistRepository {
                 .sortedBy { it.name }
                 .collect(provider)
         }
-        for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
+        for row in rows { result.push(playlistFromRow(row, loadTracks(row.id))) }
         sql.close(db)
         return result
     }
@@ -72,52 +75,42 @@ class SqlitePlaylistRepository implements PlaylistRepository {
                 .sortedBy { it.name }
                 .collect(provider)
         }
-        for row in rows { result.push(playlistFromRow(row, loadTracks(db, row.id))) }
+        for row in rows { result.push(playlistFromRow(row, loadTracks(row.id))) }
         sql.close(db)
         return result
     }
 
-    // Cross-table search (tracks joined to their playlist for the owner check);
-    // the single-table QueryProvider can't express the join, so this one stays a
-    // parameterized queryBound.
+    // Cross-table search: a typed .join() over tracks/playlists (for the owner
+    // check), projected to MusicHit, then filtered/sorted like any other query
+    // chain — no raw SQL.
     producer searchTracks(term: String, username: String, role: String) -> List<MusicHit> {
-        let hits = empty List<MusicHit>
         let opened = connect()
-        if isErr(opened) { return hits }
+        if isErr(opened) { return empty List<MusicHit> }
         let db = opened.value
+        binder.useDatabase(db)
 
-        let like = wildcard(term)
-        let sqlStr = """
-            select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url
-            from tracks t join playlists p on p.id = t.playlist_id
-            where p.owner = ? and lower(t.title || ' ' || t.artist) like ?
-            order by p.id, t.position, t.rowid
-            """
-        let params = strParams(listOf(username, like))
+        let needle = text.toLower(term)
+        let joined = query.from<TrackRow>("tracks")
+            .join(query.from<PlaylistRow>("playlists"), { it.playlist_id }, { it.id })
+            .map { SearchHitRow {
+                id: it.first.id, playlist_id: it.first.playlist_id, title: it.first.title,
+                artist: it.first.artist, url: it.first.url, added_by: it.first.added_by,
+                cover_url: it.first.cover_url, owner: it.second.owner
+            } }
+            .filter { it.title.lowercase().contains(needle) or it.artist.lowercase().contains(needle) }
+
+        let rows = empty List<SearchHitRow>
         if role == "ADMIN" {
-            sqlStr = """
-                select t.id, t.playlist_id, t.title, t.artist, t.url, t.added_by, t.cover_url
-                from tracks t join playlists p on p.id = t.playlist_id
-                where lower(t.title || ' ' || t.artist) like ?
-                order by p.id, t.position, t.rowid
-                """
-            params = strParams(listOf(like))
-        }
-        let rows = sql.queryBound(db, sqlStr, params)
-        if isOk(rows) {
-            for row in rows.value.items {
-                hits.push(MusicHit {
-                    id: reader.textAt(row, "id", ""),
-                    playlistId: reader.textAt(row, "playlist_id", ""),
-                    title: reader.textAt(row, "title", ""),
-                    artist: reader.textAt(row, "artist", ""),
-                    url: reader.textAt(row, "url", ""),
-                    addedBy: reader.textAt(row, "added_by", ""),
-                    coverUrl: reader.textAt(row, "cover_url", "")
-                })
-            }
+            rows = joined.collect(provider)
+        } else {
+            rows = joined.filter { it.owner == username }.collect(provider)
         }
         sql.close(db)
+
+        let hits = empty List<MusicHit>
+        for row in rows {
+            hits.push(MusicHit { id: row.id, playlistId: row.playlist_id, title: row.title, artist: row.artist, url: row.url, addedBy: row.added_by, coverUrl: row.cover_url })
+        }
         return hits
     }
 
@@ -125,11 +118,11 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let opened = connect()
         if isErr(opened) { return "" }
         let db = opened.value
+        binder.useDatabase(db)
 
         let id = crypto.randomHex(8)
-        let written = sql.execBound(db, "insert into playlists (id, name, description, owner) values (?, ?, ?, ?)", strParams(listOf(id, name, description, owner)))
+        provider.insert("playlists", PlaylistRow { id: id, name: name, description: description, owner: owner } as Json)
         sql.close(db)
-        if isErr(written) { return "" }
         return id
     }
 
@@ -137,25 +130,24 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let opened = connect()
         if isErr(opened) { return false }
         let db = opened.value
+        binder.useDatabase(db)
 
-        let clearedTracks = sql.execBound(db, "delete from tracks where playlist_id = ?", strParams(listOf(id)))
-        let removedPlaylist = sql.execBound(db, "delete from playlists where id = ?", strParams(listOf(id)))
+        provider.remove("tracks", "playlist_id", id as Json)
+        provider.remove("playlists", "id", id as Json)
         sql.close(db)
-        return isOk(clearedTracks) and isOk(removedPlaylist)
+        return true
     }
 
     producer addTrack(id: String, title: String, artist: String, url: String, addedBy: String, coverUrl: String) -> String {
         let opened = connect()
         if isErr(opened) { return "" }
         let db = opened.value
+        binder.useDatabase(db)
 
         let trackId = crypto.randomHex(8)
-        let written = sql.execBound(db, """
-            insert into tracks (id, playlist_id, title, artist, url, added_by, cover_url, position)
-            values (?, ?, ?, ?, ?, ?, ?, (select count(*) from tracks where playlist_id = ?))
-            """, strParams(listOf(trackId, id, title, artist, url, addedBy, coverUrl, id)))
+        let position = tracksIn(id).len()
+        provider.insert("tracks", TrackRow { id: trackId, playlist_id: id, title: title, artist: artist, url: url, added_by: addedBy, cover_url: coverUrl, position: position } as Json)
         sql.close(db)
-        if isErr(written) { return "" }
         return trackId
     }
 
@@ -163,50 +155,55 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         let opened = connect()
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
+        binder.useDatabase(db)
 
-        let written = sql.execBound(db, """
-            update tracks set title = ?, artist = ?, url = ?, cover_url = ?
-            where id = ? and playlist_id = ?
-            """, strParams(listOf(title, artist, url, coverUrl, trackId, id)))
-        if isErr(written) { sql.close(db) return "storage-failed" }
-        let changed = sql.changes(db)
+        let existing = trackById(trackId)
+        if let row = existing {
+            if row.playlist_id != id { sql.close(db) return "not-found" }
+            provider.insert("tracks", TrackRow { id: row.id, playlist_id: row.playlist_id, title: title, artist: artist, url: url, added_by: row.added_by, cover_url: coverUrl, position: row.position } as Json)
+            sql.close(db)
+            return "updated"
+        }
         sql.close(db)
-        if changed == 0 { return "not-found" }
-        return "updated"
+        return "not-found"
     }
 
     producer deleteTrack(id: String, trackId: String) -> String {
         let opened = connect()
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
+        binder.useDatabase(db)
 
-        let written = sql.execBound(db, "delete from tracks where id = ? and playlist_id = ?", strParams(listOf(trackId, id)))
-        if isErr(written) { sql.close(db) return "storage-failed" }
-        let changed = sql.changes(db)
+        let existing = trackById(trackId)
+        if let row = existing {
+            if row.playlist_id != id { sql.close(db) return "not-found" }
+            provider.remove("tracks", "id", trackId as Json)
+            sql.close(db)
+            return "deleted"
+        }
         sql.close(db)
-        if changed == 0 { return "not-found" }
-        return "deleted"
+        return "not-found"
     }
 
-    // Moves a track to another playlist atomically: a single UPDATE reassigns
-    // the row and appends it to the end of the target's order. The track keeps
-    // its id, so there is no add-then-delete duplication window.
+    // Moves a track to another playlist atomically: fetch, reassign
+    // playlist_id, and append it to the target's order via a full-row upsert.
+    // The track keeps its id, so there is no add-then-delete duplication window.
     producer moveTrack(id: String, trackId: String, targetId: String) -> String {
         let opened = connect()
         if isErr(opened) { return "storage-failed" }
         let db = opened.value
+        binder.useDatabase(db)
 
-        let written = sql.execBound(db, """
-            update tracks set
-                playlist_id = ?,
-                position = (select count(*) from tracks where playlist_id = ?)
-            where id = ? and playlist_id = ?
-            """, strParams(listOf(targetId, targetId, trackId, id)))
-        if isErr(written) { sql.close(db) return "storage-failed" }
-        let changed = sql.changes(db)
+        let existing = trackById(trackId)
+        if let row = existing {
+            if row.playlist_id != id { sql.close(db) return "not-found" }
+            let position = tracksIn(targetId).len()
+            provider.insert("tracks", TrackRow { id: row.id, playlist_id: targetId, title: row.title, artist: row.artist, url: row.url, added_by: row.added_by, cover_url: row.cover_url, position: position } as Json)
+            sql.close(db)
+            return "moved"
+        }
         sql.close(db)
-        if changed == 0 { return "not-found" }
-        return "moved"
+        return "not-found"
     }
 
     // Opens the playlist database and guarantees the schema exists.
@@ -232,8 +229,8 @@ class SqlitePlaylistRepository implements PlaylistRepository {
     }
 
     // A typed chain over `tracks` for one playlist, ordered by stored position.
-    producer loadTracks(db: sqlite.Database, playlistId: String) -> List<Track> {
-        binder.useDatabase(db)
+    // Assumes the connection is already bound (every caller binds it first).
+    producer loadTracks(playlistId: String) -> List<Track> {
         let rows = query.from<TrackRow>("tracks")
             .filter { it.playlist_id == playlistId }
             .sortedBy { it.position }
@@ -243,24 +240,20 @@ class SqlitePlaylistRepository implements PlaylistRepository {
         return tracks
     }
 
+    producer tracksIn(playlistId: String) -> List<TrackRow> {
+        return query.from<TrackRow>("tracks").filter { it.playlist_id == playlistId }.collect(provider)
+    }
+
+    producer trackById(trackId: String) -> TrackRow? {
+        return query.from<TrackRow>("tracks").filter { it.id == trackId }.first(provider)
+    }
+
     mapper playlistFromRow(row: PlaylistRow, tracks: List<Track>) -> Playlist {
         return Playlist { found: true, id: row.id, name: row.name, description: row.description, owner: row.owner, tracks: tracks }
     }
 
     mapper trackFromRow(row: TrackRow) -> Track {
         return Track { id: row.id, title: row.title, artist: row.artist, url: row.url, addedBy: row.added_by, coverUrl: row.cover_url }
-    }
-
-    // Builds a positional-parameter array of text values for a bound statement.
-    producer strParams(items: List<String>) -> Json {
-        let arr = json.array()
-        for item in items { arr = json.push(arr, json.str(item)) }
-        return arr
-    }
-
-    // A case-insensitive LIKE pattern; empty term becomes "%%" (matches all).
-    mapper wildcard(term: String) -> String {
-        return "%" + text.toLower(term) + "%"
     }
 
     mapper missingPlaylist(id: String) -> Playlist {

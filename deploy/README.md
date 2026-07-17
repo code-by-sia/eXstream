@@ -48,8 +48,8 @@ docker push $REGISTRY/exstream-web:latest
 
 The `web` build uses the Dockerfile's default (production) target: Vite build
 served by nginx. The Xi service images install the Xi toolchain with `brew
-install code-by-sia/xi/xi` (the tap tracks the latest release) and run
-`xi install` to fetch the xi-sqlite dependency during the build.
+install code-by-sia/xi/xi` (the tap tracks the latest release); no other
+build-time dependency fetch is needed.
 
 For local clusters you can skip the registry: `kind load docker-image …` or
 `k3s ctr images import …` after building.

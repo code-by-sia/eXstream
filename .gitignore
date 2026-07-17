@@ -1,6 +1,6 @@
 .DS_Store
 build/
-data/
+/data/
 dist/
 web/dist/
 web/node_modules/

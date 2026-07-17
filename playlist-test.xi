@@ -5,7 +5,6 @@ import "std/config.xi"
 module App {
     id = "playlist-test"
     includes = ["playlist/**", "common/**"]
-    dependencies = ["https://github.com/code-by-sia/xi-sqlite/archive/refs/tags/v0.2.0.tar.gz"]
     bind AppConfig -> readConfig("common/config.yaml")
     bind QueryProvider  -> SqliteQueryProvider as singleton
     bind DatabaseBinder -> SqliteQueryProvider as singleton

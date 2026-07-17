@@ -21,8 +21,7 @@ RUN brew install code-by-sia/xi/xi
 COPY --chown=linuxbrew:linuxbrew common ./common
 COPY --chown=linuxbrew:linuxbrew auth ./auth
 COPY --chown=linuxbrew:linuxbrew auth-service.xi ./
-# Fetch the xi-sqlite dependency into ./modules, then build.
-RUN xi install auth-service.xi && xc auth-service.xi
+RUN xc auth-service.xi
 
 FROM ubuntu:24.04 AS runtime
 

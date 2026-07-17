@@ -21,8 +21,7 @@ RUN brew install code-by-sia/xi/xi
 COPY --chown=linuxbrew:linuxbrew common ./common
 COPY --chown=linuxbrew:linuxbrew playlist ./playlist
 COPY --chown=linuxbrew:linuxbrew playlist-service.xi ./
-# Fetch the xi-sqlite dependency into ./modules, then build.
-RUN xi install playlist-service.xi && xc playlist-service.xi
+RUN xc playlist-service.xi
 
 FROM ubuntu:24.04 AS runtime
 

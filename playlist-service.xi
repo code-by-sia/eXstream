@@ -2,15 +2,15 @@ import "std/config.xi"
 import "std/convert.xi"
 import "std/web.xi"
 
-// Root module for the playlist service. Gathers its files by glob — no barrel.
-// Build with `xc playlist-service.xi`.
+// Root module for the playlist service. Gathers its files by glob; persistence
+// uses the generic SqliteQueryProvider (common/data) over the vendored sqlite
+// binding (common/sqlite) — no external dependency.
 module App {
     id = "playlist-service"
     name = "eXstream Playlist Service"
     version = "0.1.0"
     includes = ["playlist/**", "common/**"]
     excludes = ["playlist/test/**"]
-    dependencies = ["https://github.com/code-by-sia/xi-sqlite/archive/refs/tags/v0.2.0.tar.gz"]
 
     bind AppConfig -> readConfig("common/config.yaml")
     bind QueryProvider  -> SqliteQueryProvider as singleton

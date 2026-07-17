@@ -50,7 +50,7 @@ All backend endpoints are published under the `/api` prefix; Traefik strips it (
 - `web`: React JavaScript music player UI with Tailwind, shadcn-style UI primitives, and Zustand. Default port: `7001`.
 - `common`: shared Xi interfaces (config, security, util) and `config.yaml`, gathered into every service.
 
-Each backend service is a **root-level Xi module** (`auth-service.xi`, `playlist-service.xi`, `file-service.xi`) that gathers its own folder plus `common/` by glob — no per-service import barrel. The `auth` and `playlist` services pull [xi-sqlite](https://github.com/code-by-sia/xi-sqlite) through their module's `dependencies` (fetched into `./modules` by `xi install`); there is no vendored copy.
+Each backend service is a **root-level Xi module** (`auth-service.xi`, `playlist-service.xi`, `file-service.xi`) that gathers its own folder plus `common/` by glob — no per-service import barrel. The `auth` and `playlist` services persist through `common/data/sqlite-query-provider.xi`, a `std/data`/`std/query` `QueryProvider` over a small vendored sqlite binding (`common/sqlite/`) — no external dependency.
 
 ### Configuration
 
@@ -58,7 +58,7 @@ All services share [`common/config.yaml`](common/config.yaml) — ports and stor
 
 ### Storage & layering
 
-The `auth` and `playlist` services persist to SQLite (`auth.db`, `playlists.db` under the configured `dataDir`) through the [xi-sqlite](https://github.com/code-by-sia/xi-sqlite) library: reads use its typed `QueryProvider` (`query.from<Row>()` chains) and writes use parameterized `execBound`, so queries are injection-safe with no hand-built SQL. The `file` service stores uploads as real files under `fileStorageDir`. Every service follows the same layered, dependency-injected design: behaviour lives in classes behind small interfaces, with the **interfaces in `business/`** and their **implementations in `business/impl/`**. HTTP handlers, repositories, JWT handling, path parsing, and access checks are all injected implementations — there are no loose top-level functions (only `entry main` and plain `type` declarations sit outside a class). Responses are serialized directly with `res.send(...)`. Swap any piece by binding a different implementor in `module App`.
+The `auth` and `playlist` services persist to SQLite (`auth.db`, `playlists.db` under the configured `dataDir`) via `std/data`'s repository/`QueryProvider` model: reads use typed `query.from<Row>().filter{}.collect(provider)` chains and writes use the provider's generic `insert`/`remove`, so there is no hand-built SQL and no per-entity write glue. The `file` service stores uploads as real files under `fileStorageDir`. Every service follows the same layered, dependency-injected design: behaviour lives in classes behind small interfaces, with the **interfaces in `business/`** and their **implementations in `business/impl/`**. HTTP handlers, repositories, JWT handling, path parsing, and access checks are all injected implementations — there are no loose top-level functions (only `entry main` and plain `type` declarations sit outside a class). Responses are serialized directly with `res.send(...)`. Swap any piece by binding a different implementor in `module App`.
 
 ## API Specs
 
@@ -73,8 +73,7 @@ docker compose up --build
 ```
 
 The Xi service images install the Xi toolchain with `brew install
-code-by-sia/xi/xi` (the tap tracks the latest release) and run `xi install` to
-fetch the xi-sqlite dependency during the build.
+code-by-sia/xi/xi` (the tap tracks the latest release).
 
 - Web UI: http://localhost:7001
 - API gateway: http://localhost:8080
@@ -111,21 +110,15 @@ The [`deploy/`](deploy) folder ships the full stack as Kubernetes objects — De
 
 ## Build Xi Services Locally
 
-The `auth` and `playlist` modules declare xi-sqlite as a dependency. Fetch it
-into `./modules` once with `xi install` (re-run only when the dependency
-changes), then build each root module:
-
 ```sh
-xi install auth-service.xi        # fetches xi-sqlite into ./modules (gitignored)
-xi install playlist-service.xi
-
 xc auth-service.xi
 xc playlist-service.xi
-xc file-service.xi                # disk-backed; no dependency to install
+xc file-service.xi
 ```
 
-Requires Xi ≥ 0.0.98 (ships `std/query`) and the SQLite library on the host
-(preinstalled on macOS; `libsqlite3-dev` on Debian/Ubuntu). Run them directly:
+Requires Xi ≥ 0.1.0 "Berlin" (ships `std/data`/`std/query`/`std/sql`) and the
+SQLite library on the host (preinstalled on macOS; `libsqlite3-dev` on
+Debian/Ubuntu). Run them directly:
 
 ```sh
 ./build/auth-service
