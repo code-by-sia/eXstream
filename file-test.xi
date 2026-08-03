@@ -4,6 +4,7 @@ import "std/config.xi"
 // test/ folder by glob; `xi test file-test.xi` runs every gathered test.
 module App {
     id = "file-test"
-    includes = ["file/**", "common/config/**", "common/security/**"]
+    includes = ["file/**", "common/config/**", "common/security/**", "common/monitoring/**"]
     bind AppConfig -> readConfig("common/config.yaml")
+    bind MonitoringRegistry -> MonitorRegistry as singleton
 }

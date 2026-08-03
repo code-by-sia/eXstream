@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: auth
+    static_configs:
+      - targets: ["auth:4001"]
+  - job_name: playlist
+    static_configs:
+      - targets: ["playlist:5001"]
+  - job_name: file
+    static_configs:
+      - targets: ["file:6001"]

@@ -60,5 +60,26 @@ services:
       - ./web:/app
       - web-node-modules:/app/node_modules
 
+  # Distributed tracing collector + UI. Ready to receive spans at
+  # http://zipkin:9411/api/v2/spans — see common/monitoring/README.md for why
+  # the Xi services don't report to it directly yet.
+  zipkin:
+    image: openzipkin/zipkin:latest
+    ports:
+      - "9411:9411"
+
+  # Scrapes each Xi service's Prometheus-format GET /metrics (see
+  # common/monitoring/prometheus-exporter.xi).
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - auth
+      - playlist
+      - file
+
 volumes:
   web-node-modules:

@@ -10,4 +10,5 @@ module App {
     bind AppConfig -> readConfig("common/config.yaml")
     bind QueryProvider  -> SqliteQueryProvider as singleton
     bind DatabaseBinder -> SqliteQueryProvider as singleton
+    bind MonitoringRegistry -> MonitorRegistry as singleton
 }
